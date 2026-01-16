@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use rust_sphincs::lib::helpers::random_generator::RandomGenerator64, Address, RandomGeneratorTrait};
+use rust_sphincs::lib::helpers::random_generator::{RandomGenerator64, Address, RandomGeneratorTrait};
 
 fn bench_sequential(c: &mut Criterion) {
     let mut generator = RandomGenerator64::new([1;32]);
