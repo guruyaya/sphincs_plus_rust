@@ -1,55 +1,54 @@
-pub mod random_generator {
-    use sha2::{Sha256, Digest, digest::Update};
-    #[derive(Clone, Debug)]
-    pub struct Address {
-        pub level: u16,
-        pub position: u64
+
+use sha2::{Sha256, Digest, digest::Update};
+#[derive(Clone, Debug)]
+pub struct Address {
+    pub level: u16,
+    pub position: u64
+}
+
+fn get_key(seed: [u8; 32], address: Address) -> [u8;32] {
+    let mut hasher = Sha256::default();
+    Update::update(&mut hasher, &seed);
+    Update::update(&mut hasher, &address.level.to_be_bytes());
+    Update::update(&mut hasher, &address.position.to_be_bytes());
+    let result = hasher.finalize();
+    result.into()
+}
+
+pub trait RandomGeneratorTrait {
+    fn new(seed: [u8; 32]) -> Self;
+    fn get_keys(&mut self, num_keys: u64, address: Address) -> Vec<[u8; 32]>;
+}
+
+// struct RandomGenerator32 {
+//     seed: [u8; 32],
+//     counter: u32
+// }
+
+// impl RandomGeneratorTrait for RandomGenerator32 {
+// }
+
+#[derive(Clone, Debug)]
+pub struct RandomGenerator64 {
+    seed: [u8; 32],
+}
+
+impl RandomGeneratorTrait for RandomGenerator64 {
+    fn new(seed: [u8; 32]) -> Self {
+        RandomGenerator64 { seed }
     }
 
-    fn get_key(seed: [u8; 32], address: Address) -> [u8;32] {
-        let mut hasher = Sha256::default();
-        Update::update(&mut hasher, &seed);
-        Update::update(&mut hasher, &address.level.to_be_bytes());
-        Update::update(&mut hasher, &address.position.to_be_bytes());
-        let result = hasher.finalize();
-        result.into()
-    }
-
-    pub trait RandomGeneratorTrait {
-        fn new(seed: [u8; 32]) -> Self;
-        fn get_keys(&mut self, num_keys: u64, address: Address) -> Vec<[u8; 32]>;
-    }
-
-    // struct RandomGenerator32 {
-    //     seed: [u8; 32],
-    //     counter: u32
-    // }
-
-    // impl RandomGeneratorTrait for RandomGenerator32 {
-    // }
-    
-    #[derive(Clone, Debug)]
-    pub struct RandomGenerator64 {
-        seed: [u8; 32],
-    }
-
-    impl RandomGeneratorTrait for RandomGenerator64 {
-        fn new(seed: [u8; 32]) -> Self {
-            RandomGenerator64 { seed }
-        }
-
-        fn get_keys(&mut self, num_keys: u64, address: Address) -> Vec<[u8; 32]> {
-            (0..num_keys).into_iter().map(|i| {
-                let new_address = Address {level: address.level, position: address.position + i};
-                get_key(self.seed, new_address)
-            }).collect()
-        }
+    fn get_keys(&mut self, num_keys: u64, address: Address) -> Vec<[u8; 32]> {
+        (0..num_keys).into_iter().map(|i| {
+            let new_address = Address {level: address.level, position: address.position + i};
+            get_key(self.seed, new_address)
+        }).collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::random_generator::{RandomGenerator64, Address, RandomGeneratorTrait};
+    use super::{RandomGenerator64, Address, RandomGeneratorTrait};
 
     #[test]
     fn test_effect_of_position() {

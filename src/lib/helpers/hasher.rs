@@ -14,12 +14,18 @@ pub mod hasher {
     pub fn complement_hash(to_hash: [u8; 32], times_repeated: u8) -> [u8;32] {
         return repeat_hash(to_hash, 255-times_repeated)
     }
+
+    pub fn hash_vector(hashes: &[ [u8; 32] ]) -> [u8; 32]{
+        todo!();
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use rand;
     use super::hasher::*;
+    use super::super::random_generator::RandomGenerator64;
+
     #[test]
     fn test_repeated_hash_same_when_zero(){
         let initial_random:  [u8;32] = rand::random();
@@ -51,5 +57,9 @@ mod tests {
         assert_eq!(target_hash, hashed_to_taget);
     }
 
+    // #[test]
+    // fn test_hash_vector() {
+    //     let generator = RandomGenerator64::new([3;32]);
+    // }
 
 }
