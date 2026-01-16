@@ -1,6 +1,5 @@
 pub mod random_generator {
     use sha2::{Sha256, Digest, digest::Update};
-
     #[derive(Clone, Debug)]
     pub struct Address {
         pub level: u16,
@@ -19,7 +18,6 @@ pub mod random_generator {
     pub trait RandomGeneratorTrait {
         fn new(seed: [u8; 32]) -> Self;
         fn get_keys(&mut self, num_keys: u64, address: Address) -> Vec<[u8; 32]>;
-
     }
 
     // struct RandomGenerator32 {
@@ -41,13 +39,10 @@ pub mod random_generator {
         }
 
         fn get_keys(&mut self, num_keys: u64, address: Address) -> Vec<[u8; 32]> {
-            let mut out: Vec<[u8; 32]> = Vec::new();
-            for i in 0..num_keys{
-                let mut new_address = address.clone();
-                new_address.position = new_address.position + i;
-                out.push( get_key(self.seed, new_address) );
-            };
-            out
+            (0..num_keys).into_iter().map(|i| {
+                let new_address = Address {level: address.level, position: address.position + i};
+                get_key(self.seed, new_address)
+            }).collect()
         }
     }
 }
