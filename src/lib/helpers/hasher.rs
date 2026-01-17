@@ -15,8 +15,10 @@ pub mod hasher {
         return repeat_hash(to_hash, 255-times_repeated)
     }
 
-    pub fn hash_vector(hashes: &[ [u8; 32] ]) -> [u8; 32]{
-        todo!();
+    pub fn hash_vector(hashes: &Vec<[u8; 32]>) -> [u8; 32]{
+        let mut hasher = Sha256::default();
+        hashes.iter().for_each(|h| Update::update(&mut hasher, h));
+        hasher.finalize().into()
     }
 }
 
@@ -24,7 +26,7 @@ pub mod hasher {
 mod tests {
     use rand;
     use super::hasher::*;
-    use super::super::random_generator::RandomGenerator64;
+    use crate::lib::helpers::random_generator::{RandomGenerator64, RandomGeneratorTrait, Address};
 
     #[test]
     fn test_repeated_hash_same_when_zero(){
@@ -57,9 +59,21 @@ mod tests {
         assert_eq!(target_hash, hashed_to_taget);
     }
 
-    // #[test]
-    // fn test_hash_vector() {
-    //     let generator = RandomGenerator64::new([3;32]);
-    // }
+    #[test]
+    fn test_hash_vector() {
+        let mut generator = RandomGenerator64::new([3;32]);
+        let hashes = generator.get_keys(4, Address{level: 3, position: 9});
+        let out1 = hash_vector(&hashes);
+        
+        let new_hashes = vec![ hashes[1], hashes[0], hashes[2], hashes[3], ];
+        let out2 = hash_vector(&new_hashes);
+        
+        assert_ne!(out1, out2);
+        
+        let old_hash_back = vec![ new_hashes[1], new_hashes[0], new_hashes[2], new_hashes[3], ];
+        let out3 = hash_vector(&old_hash_back);
+        
+        assert_eq!(out3, out1);
+    }
 
 }
