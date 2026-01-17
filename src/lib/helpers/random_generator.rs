@@ -1,5 +1,7 @@
 
 use sha2::{Sha256, Digest, digest::Update};
+pub type HashData = [u8;32];
+
 #[derive(Clone, Debug)]
 pub struct Address {
     pub level: u16,
@@ -14,7 +16,7 @@ impl Address {
         out
     }
 }
-fn get_key(seed: [u8; 32], address: &Address) -> [u8;32] {
+fn get_key(seed: HashData, address: &Address) -> HashData {
     let mut hasher = Sha256::default();
     Update::update(&mut hasher, &seed);
     Update::update(&mut hasher, &address.to_bytes());
@@ -23,12 +25,12 @@ fn get_key(seed: [u8; 32], address: &Address) -> [u8;32] {
 }
 
 pub trait RandomGeneratorTrait {
-    fn new(seed: [u8; 32]) -> Self;
-    fn get_keys(&mut self, num_keys: u64, address: &Address) -> Vec<[u8; 32]>;
+    fn new(seed: HashData) -> Self;
+    fn get_keys(&mut self, num_keys: u64, address: &Address) -> Vec<HashData>;
 }
 
 // struct RandomGenerator32 {
-//     seed: [u8; 32],
+//     seed: HashData,
 //     counter: u32
 // }
 
@@ -37,15 +39,15 @@ pub trait RandomGeneratorTrait {
 
 #[derive(Clone, Debug)]
 pub struct RandomGenerator64 {
-    seed: [u8; 32],
+    seed: HashData,
 }
 
 impl RandomGeneratorTrait for RandomGenerator64 {
-    fn new(seed: [u8; 32]) -> Self {
+    fn new(seed: HashData) -> Self {
         RandomGenerator64 { seed }
     }
 
-    fn get_keys(&mut self, num_keys: u64, address: &Address) -> Vec<[u8; 32]> {
+    fn get_keys(&mut self, num_keys: u64, address: &Address) -> Vec<HashData> {
         (0..num_keys).into_iter().map(|i| {
             let new_address = Address {level: address.level, position: address.position + i};
             get_key(self.seed, &new_address)
@@ -55,11 +57,11 @@ impl RandomGeneratorTrait for RandomGenerator64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{RandomGenerator64, Address, RandomGeneratorTrait};
+    use super::{RandomGenerator64, Address, RandomGeneratorTrait, HashData};
 
     #[test]
     fn test_effect_of_position() {
-        let seed:[u8;32] = [0;32];
+        let seed:HashData = [0;32];
         let mut generator = RandomGenerator64::new(seed);
         
         let address1 = Address {level: 0, position: 19};
@@ -81,7 +83,7 @@ mod tests {
 
     #[test]
     fn test_effect_of_level() {
-        let seed:[u8;32] = [0;32];
+        let seed:HashData = [0;32];
         let mut generator = RandomGenerator64::new(seed);
         
         let address1 = Address {level: 0, position: 19};
@@ -104,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_effect_of_seed() {
-        let seed1:[u8;32] = [0;32];
+        let seed1:HashData = [0;32];
         let mut generator1 = RandomGenerator64::new(seed1);
         
         let address = Address {level: 0, position: 19};
@@ -113,7 +115,7 @@ mod tests {
         assert_eq!(key_list1.len(), 2);
         assert_ne!(key_list1[0], key_list1[1]);
         
-        let mut seed2:[u8;32] = [0;32];
+        let mut seed2:HashData = [0;32];
         seed2[0] = 1;
 
         let mut generator2 = RandomGenerator64::new(seed2);
@@ -130,7 +132,7 @@ mod tests {
 
     #[test]
     fn test_all_the_same() {
-        let seed1:[u8;32] = [0;32];
+        let seed1:HashData = [0;32];
         let mut generator1 = RandomGenerator64::new(seed1);
         
         let address = Address {level: 0, position: 19};
@@ -139,7 +141,7 @@ mod tests {
         assert_eq!(key_list1.len(), 2);
         assert_ne!(key_list1[0], key_list1[1]);
         
-        let seed2:[u8;32] = [0;32];
+        let seed2:HashData = [0;32];
 
         let mut generator2 = RandomGenerator64::new(seed2);
         let key_list2 = generator2.get_keys(2, &address);

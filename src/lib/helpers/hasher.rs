@@ -1,8 +1,8 @@
 use sha2::{Sha256, Digest, digest::Update};
 
-use crate::lib::helpers::random_generator::Address;
+use crate::lib::helpers::random_generator::{Address, HashData};
 
-pub struct HashContext<'a>([u8; 32], &'a Address);
+pub struct HashContext<'a>(HashData, &'a Address);
 
 impl<'a> HashContext<'a>{
     fn to_bytes(&self) -> [u8;42] {
@@ -12,7 +12,7 @@ impl<'a> HashContext<'a>{
         out
     }
 }
-pub fn repeat_hash(to_hash: [u8; 32], times_to_repeat: u8, context: &HashContext) -> [u8;32] {
+pub fn repeat_hash(to_hash: HashData, times_to_repeat: u8, context: &HashContext) -> [u8;32] {
     let hash_step = to_hash.clone();
     (0..times_to_repeat).fold(hash_step, |acc, _| {
         let mut hashed = Sha256::default();
@@ -24,11 +24,11 @@ pub fn repeat_hash(to_hash: [u8; 32], times_to_repeat: u8, context: &HashContext
     })
 }
 
-pub fn complement_hash(to_hash: [u8; 32], times_repeated: u8, context: &HashContext) -> [u8;32] {
+pub fn complement_hash(to_hash: HashData, times_repeated: u8, context: &HashContext) -> [u8;32] {
     return repeat_hash(to_hash, 255-times_repeated, &context)
 }
 
-pub fn hash_vector(hashes: &Vec<[u8; 32]>) -> [u8; 32]{
+pub fn hash_vector(hashes: &Vec<HashData>) -> HashData{
     let mut hasher = Sha256::default();
     hashes.iter().for_each(|h| Update::update(&mut hasher, h));
     hasher.finalize().into()
