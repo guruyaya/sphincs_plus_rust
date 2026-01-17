@@ -5,7 +5,7 @@ fn bench_sequential(c: &mut Criterion) {
     let mut generator = RandomGenerator64::new([1;32]);
 
     c.bench_function("get_10000_keys_sequantial", |b| {
-        b.iter(|| generator.get_keys(10_000, Address { level: 2, position: 1000 }));
+        b.iter(|| generator.get_keys(10_000, &Address { level: 2, position: 1000 }));
     });
 }
 
