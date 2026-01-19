@@ -1,18 +1,13 @@
-use crate::lib::helpers::random_generator::{Address, HashData};
+use crate::lib::helpers::{hasher::HashContext, random_generator::{HashData}};
 
 #[derive(Debug)]
-pub struct WotsPlusSignature {
-    start_address: Address,
-    public_seed: HashData,
-
-    message_hashes: [HashData;32],
-    checksum_hashes: [HashData;2],
+pub struct WotsPlusSignature<'a> {
+    pub context: &'a HashContext<'a>,
+    pub message_hashes: [HashData;32],
+    pub checksum_hashes: [HashData;2],
 }
 
-impl WotsPlusSignature {
-    pub fn new(_start_address: Address, _public_seed: HashData, _message_hashes: [HashData;32], _checksum_hashes: [HashData; 2]) {
-        todo!();
-    }
+impl<'a> WotsPlusSignature<'a> {
     pub fn calculate_target_key(&self) -> HashData {
         todo!()
     }

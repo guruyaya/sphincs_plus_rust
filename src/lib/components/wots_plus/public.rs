@@ -1,10 +1,9 @@
-use crate::lib::{components::wots_plus::signature::WotsPlusSignature, helpers::random_generator::{Address, HashData}};
+use crate::lib::{components::wots_plus::signature::WotsPlusSignature, helpers::{hasher::HashContext, random_generator::{HashData}}};
 
 
 #[derive(Debug)]
 pub struct WotsPlusPublic<'a> {
-    pub start_address: &'a Address,
-    pub public_seed: HashData,
+    pub context: &'a HashContext<'a>,
     pub public_key: HashData
 }
 

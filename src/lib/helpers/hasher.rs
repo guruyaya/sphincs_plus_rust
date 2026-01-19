@@ -2,6 +2,7 @@ use sha2::{Sha256, Digest, digest::Update};
 
 use crate::lib::helpers::random_generator::{Address, HashData};
 
+#[derive(Debug)]
 pub struct HashContext<'a>(pub HashData, pub &'a Address);
 
 impl<'a> HashContext<'a>{
@@ -38,7 +39,7 @@ pub fn hash_vector(hashes: &[HashData]) -> HashData{
 mod tests {
     use rand;
     use super::*;
-    use crate::lib::helpers::random_generator::{RandomGeneratorSha256, RandomGeneratorTrait, Address};
+    use crate::lib::helpers::random_generator::{Address, InnerKeyRole, RandomGeneratorSha256};
     
     #[test]
     fn test_repeated_hash_same_when_zero(){

@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
     use crate::lib::{components::wots_plus::secret::{SeedPair, WotsPlus}, helpers::random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256, byte_array_to_hex}};
-    use super::*;
     use std::collections::HashSet;
     
     fn gen_private_public_from_seed(address: &Address) -> SeedPair {
@@ -69,7 +68,7 @@ mod tests {
         let message = "Hello from SPHINCS+ on rust".as_bytes();
         
         let address = Address {level: 1, position: 9000};
-        let wots = WotsPlus::new_random(address);
+        let wots = WotsPlus::new_random(&address);
         let public = wots.generate_public_key();
         let signature = wots.sign_message(message);
         
