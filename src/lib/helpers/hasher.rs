@@ -38,7 +38,7 @@ pub fn hash_vector(hashes: &Vec<HashData>) -> HashData{
 mod tests {
     use rand;
     use super::*;
-    use crate::lib::helpers::random_generator::{RandomGenerator64, RandomGeneratorTrait, Address};
+    use crate::lib::helpers::random_generator::{RandomGeneratorSha256, RandomGeneratorTrait, Address};
     
     #[test]
     fn test_repeated_hash_same_when_zero(){
@@ -91,7 +91,7 @@ mod tests {
     
     #[test]
     fn test_hash_vector() {
-        let mut generator = RandomGenerator64::new([3;32]);
+        let mut generator = RandomGeneratorSha256::new([3;32]);
         let hashes = generator.get_keys(4, &Address{level: 3, position: 9});
         let out1 = hash_vector(&hashes);
         
@@ -108,7 +108,7 @@ mod tests {
     
     #[test]
     fn test_change_vector_seed() {
-        let mut random_initial = RandomGenerator64::new([3;32]);
+        let mut random_initial = RandomGeneratorSha256::new([3;32]);
         
         let address = &Address { level: 10, position: 15 };
         let to_hash = random_initial.get_keys(1, &address)[0];
@@ -126,7 +126,7 @@ mod tests {
     
     #[test]
     fn test_change_vector_position() {
-        let mut random_initial = RandomGenerator64::new([3;32]);
+        let mut random_initial = RandomGeneratorSha256::new([3;32]);
         
         let address1 = &Address { level: 10, position: 15 };
         let address2 = &Address { level: 10, position: 16 };
@@ -146,7 +146,7 @@ mod tests {
 
     #[test]
     fn test_change_vector_level() {
-        let mut random_initial = RandomGenerator64::new([3;32]);
+        let mut random_initial = RandomGeneratorSha256::new([3;32]);
         
         let address1 = &Address { level: 10, position: 15 };
         let address2 = &Address { level: 11, position: 15 };
@@ -166,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_same_vector_address_and_seed() {
-        let mut random_initial = RandomGenerator64::new([3;32]);
+        let mut random_initial = RandomGeneratorSha256::new([3;32]);
         
         let address1 = &Address { level: 10, position: 15 };
         let address2 = &Address { level: 10, position: 15 };
