@@ -1,8 +1,8 @@
 use sha2::{Sha256, Digest, digest::Update};
 
-use crate::lib::helpers::random_generator::{Address, HashData};
+use crate::lib::helpers::random_generator::{Address, HashData, InnerKeyRole};
 
-pub struct HashContext<'a>(HashData, &'a Address);
+pub struct HashContext<'a>(pub HashData, pub &'a Address);
 
 impl<'a> HashContext<'a>{
     fn to_bytes(&self) -> [u8;42] {
@@ -28,7 +28,7 @@ pub fn complement_hash(to_hash: HashData, times_repeated: u8, context: &HashCont
     return repeat_hash(to_hash, 255-times_repeated, &context)
 }
 
-pub fn hash_vector(hashes: &Vec<HashData>) -> HashData{
+pub fn hash_vector(hashes: &[HashData]) -> HashData{
     let mut hasher = Sha256::default();
     hashes.iter().for_each(|h| Update::update(&mut hasher, h));
     hasher.finalize().into()
@@ -92,7 +92,7 @@ mod tests {
     #[test]
     fn test_hash_vector() {
         let mut generator = RandomGeneratorSha256::new([3;32]);
-        let hashes = generator.get_keys(4, &Address{level: 3, position: 9});
+        let hashes = generator.get_keys::<4>(&Address{level: 3, position: 9}, InnerKeyRole::MessageKey);
         let out1 = hash_vector(&hashes);
         
         let new_hashes = vec![ hashes[1], hashes[0], hashes[2], hashes[3], ];
@@ -111,7 +111,7 @@ mod tests {
         let mut random_initial = RandomGeneratorSha256::new([3;32]);
         
         let address = &Address { level: 10, position: 15 };
-        let to_hash = random_initial.get_keys(1, &address)[0];
+        let to_hash = random_initial.get_keys::<1>(&address, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
         let context1 = HashContext([8;32], &address);
@@ -130,7 +130,7 @@ mod tests {
         
         let address1 = &Address { level: 10, position: 15 };
         let address2 = &Address { level: 10, position: 16 };
-        let to_hash = random_initial.get_keys(1, &address1)[0];
+        let to_hash = random_initial.get_keys::<1>(&address1, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
         let context1 = HashContext([8;32], &address1);
@@ -150,7 +150,7 @@ mod tests {
         
         let address1 = &Address { level: 10, position: 15 };
         let address2 = &Address { level: 11, position: 15 };
-        let to_hash = random_initial.get_keys(1,address1)[0];
+        let to_hash = random_initial.get_keys::<1>(address1, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
         let context1 = HashContext([8;32], &address1);
@@ -171,7 +171,7 @@ mod tests {
         let address1 = &Address { level: 10, position: 15 };
         let address2 = &Address { level: 10, position: 15 };
 
-        let to_hash = random_initial.get_keys(1,address1)[0];
+        let to_hash = random_initial.get_keys::<1>(address1, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
         let context1 = HashContext([8;32], &address1);

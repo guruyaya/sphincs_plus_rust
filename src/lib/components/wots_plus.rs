@@ -1,9 +1,17 @@
-use crate::lib::helpers::{random_generator::{Address, HashData, byte_array_to_hex}};
+use std::hash::Hash;
+
+use crate::lib::helpers::{hasher::{HashContext, hash_vector, repeat_hash}, random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256, byte_array_to_hex}};
 use log::{error, warn, info, debug};
 use rand;
 
 pub struct SeedPair(HashData, HashData); // private_seed, public_seed
 
+
+#[derive(Debug)]
+pub struct SecretKeysPair{
+    message: [HashData;32],
+    checksum: [HashData;2]
+}
 #[derive(Debug)]
 pub struct WotsPlusSignature {
     start_address: Address,
@@ -25,20 +33,20 @@ impl WotsPlusSignature {
         todo!()
     }
     
-    pub fn from_bytes(bytes: [u8; 42]) -> Self{
+    pub fn from_bytes(_bytes: [u8; 42]) -> Self{
         todo!()
     }
 }
 
 #[derive(Debug)]
-pub struct WotsPlusPublic {
-    start_address: Address,
+pub struct WotsPlusPublic<'a> {
+    start_address: &'a Address,
     public_seed: HashData,
     public_key: HashData
 }
 
 
-impl WotsPlusPublic {
+impl<'a> WotsPlusPublic<'a> {
     
     pub fn validate_hash(&self, hash: HashData, sign: &WotsPlusSignature) -> bool {
         todo!()
@@ -52,7 +60,7 @@ impl WotsPlusPublic {
         todo!()
     }
     
-    pub fn from_bytes(bytes: [u8; 42]) -> Self{
+    pub fn from_bytes(_bytes: [u8; 42]) -> Self{
         todo!()
     }
     
@@ -61,6 +69,9 @@ impl WotsPlusPublic {
 #[derive(Debug)]
 pub struct WotsPlus {
     seed: HashData,
+    
+    secret_keys: SecretKeysPair,
+
     pub public_seed: HashData,
     pub address: Address
 }
@@ -71,17 +82,40 @@ impl WotsPlus {
         SeedPair(rand::random(), rand::random())
     }
 
-    pub fn new(seed: HashData, public_seed: HashData, address: Address) -> Self {
-        Self {seed: seed, public_seed: public_seed, address: address}
+    fn generate_secret_keys(seed: HashData, address: &Address) -> SecretKeysPair{
+        let mut rndgen = RandomGeneratorSha256::new(seed);
+        let message_keys = rndgen.get_keys::<32>(&address, InnerKeyRole::MessageKey);
+        let checksum_keys = rndgen.get_keys::<2>(&address, InnerKeyRole::ChecksumKey);
+        
+        SecretKeysPair {
+            message: message_keys,
+            checksum: checksum_keys
+        }
+    }
+
+    pub fn new(seed: HashData, public_seed: HashData, address: &Address) -> Self {
+        Self {seed: seed, public_seed: public_seed, address: address.clone(), secret_keys: Self::generate_secret_keys(seed, address)}
     }
 
     pub fn new_random(address: Address) -> Self {
         let SeedPair(seed, public_seed) = Self::gen_true_random_keys();
-        Self::new(seed, public_seed, address)
+        Self::new(seed, public_seed, &address)
     }
 
     pub fn generate_public_key(&self) -> WotsPlusPublic {
-        todo!()
+        let mut public_keyset = [[0u8;32];34];
+        let context = HashContext(self.public_seed, &self.address);
+
+        for (index, k) in self.secret_keys.message.iter().enumerate(){
+            public_keyset[index] = repeat_hash(*k, 255, &context);
+        };
+        
+        for (index, k) in self.secret_keys.checksum.iter().enumerate(){
+            public_keyset[32 + index] = repeat_hash(*k, 255, &context);
+        };
+
+        let public_key = hash_vector(&public_keyset);
+        WotsPlusPublic { start_address: &self.address, public_seed: self.public_seed, public_key: public_key}
     }
     
     pub fn sign_hash(&self, hash: HashData) -> WotsPlusSignature {
@@ -96,7 +130,7 @@ impl WotsPlus {
         todo!()
     }
     
-    pub fn from_bytes(bytes: [u8; 42]) -> Self{
+    pub fn from_bytes(_bytes: [u8; 42]) -> Self{
         todo!()
     }
     
@@ -111,7 +145,7 @@ mod tests {
         let key:[u8;32] = [31u8;32];
         let mut generator = RandomGeneratorSha256::new(key);
         
-        let seeds = generator.get_keys(2, &address);
+        let seeds = generator.get_keys::<2>(&address, InnerKeyRole::MessageKey); // Dummy role for test
         
         SeedPair(seeds[0], seeds[1])
     }
@@ -124,7 +158,7 @@ mod tests {
         hashset_of_seeds.insert ([0u8;32]); // TODO: Acctually add some from debug data
         let basline_size = hashset_of_seeds.len();
 
-        for i in (0..100) {
+        for i in 0..100 {
             let SeedPair(seed, public_seed) = WotsPlus::gen_true_random_keys();
 
             hashset_of_seeds.insert(seed);
@@ -140,8 +174,8 @@ mod tests {
         let address = Address {level: 1, position: 9000};
         let SeedPair(seed, public_seed) = gen_private_public_from_seed(&address);
         
-        let secret1 = WotsPlus::new(seed, public_seed, address.clone());
-        let secret2 = WotsPlus::new(seed, public_seed, address);
+        let secret1 = WotsPlus::new(seed, public_seed, &address);
+        let secret2 = WotsPlus::new(seed, public_seed, &address);
         
         assert_eq!(secret1.generate_public_key().public_key, secret2.generate_public_key().public_key);
     }
@@ -154,9 +188,9 @@ mod tests {
         let mut address2 = address.clone();
         address2.position = 9001;
         
-        let secret1 = WotsPlus::new(seed, public_seed, address);
+        let secret1 = WotsPlus::new(seed, public_seed, &address);
         // Knowingly providing the wrong address, for the test
-        let secret2 = WotsPlus::new(seed, public_seed, address2);
+        let secret2 = WotsPlus::new(seed, public_seed, &address2);
         
         let pub1 = secret1.generate_public_key().public_key;
         let pub2 = secret2.generate_public_key().public_key;

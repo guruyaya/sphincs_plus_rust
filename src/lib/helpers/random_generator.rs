@@ -6,6 +6,23 @@ pub fn byte_array_to_hex(data: &[u8]) -> String{
     data.iter().map(|b| format!("{:02x}", b)).collect()
 }
 
+pub enum InnerKeyRole {
+    MessageKey,
+    ChecksumKey
+}
+
+impl InnerKeyRole {
+    fn to_bytes(&self) -> [u8;1]{
+        match self {
+            InnerKeyRole::ChecksumKey => {
+                [1]
+            }
+            InnerKeyRole::MessageKey => {
+                [2]
+            }
+        }
+    }
+}
 #[derive(Clone, Debug)]
 pub struct Address {
     pub level: u16,
@@ -20,17 +37,20 @@ impl Address {
         out
     }
 }
-fn get_key(seed: HashData, address: &Address) -> HashData {
+fn get_key(seed: HashData, address: &Address, role: &InnerKeyRole, role_pos: usize) -> HashData {
     let mut hasher = Sha256::default();
     Update::update(&mut hasher, &seed);
     Update::update(&mut hasher, &address.to_bytes());
+    Update::update(&mut hasher, &role.to_bytes());
+    Update::update(&mut hasher, &role_pos.to_le_bytes());
+
     let result = hasher.finalize();
     result.into()
 }
 
 pub trait RandomGeneratorTrait {
     fn new(seed: HashData) -> Self;
-    fn get_keys(&mut self, num_keys: u64, address: &Address) -> Vec<HashData>;
+    fn get_keys(&mut self, num_keys: u16, address: &Address, role: InnerKeyRole) -> Vec<HashData>;
 }
 
 #[derive(Clone, Debug)]
@@ -43,16 +63,19 @@ impl RandomGeneratorSha256 {
         RandomGeneratorSha256 { seed }
     }
 
-    pub fn get_keys(&mut self, num_keys: u64, address: &Address) -> Vec<HashData> {
-        (0..num_keys).into_iter().map(|i| {
-            let new_address = Address {level: address.level, position: address.position + i};
-            get_key(self.seed, &new_address)
-        }).collect()
+    pub fn get_keys<const NumKeys: usize>(&mut self, address: &Address, role: InnerKeyRole) -> [HashData;NumKeys] {
+        let mut out = [[0u8; 32];NumKeys];
+        for i in 0..NumKeys {
+            out[i] = get_key(self.seed, address, &role, i)
+        };
+        out
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::lib::helpers::random_generator::InnerKeyRole;
+
     use super::{RandomGeneratorSha256, Address, HashData};
 
     #[test]
@@ -61,20 +84,19 @@ mod tests {
         let mut generator = RandomGeneratorSha256::new(seed);
         
         let address1 = Address {level: 0, position: 19};
-        let key_list1 = generator.get_keys(2, &address1);
+        let key_list1 = generator.get_keys::<2>(&address1, InnerKeyRole::ChecksumKey);
         
         assert_eq!(key_list1.len(), 2);
         assert_ne!(key_list1[0], key_list1[1]);
         
         let address2 = Address {level: 0, position: 20};
-        let key_list2 = generator.get_keys(2, &address2);
+        let key_list2 = generator.get_keys::<2>(&address2, InnerKeyRole::ChecksumKey);
         
         assert_eq!(key_list2.len(), 2);
         assert_ne!(key_list2[0], key_list2[1]);
         assert_ne!(key_list1[0], key_list2[0]);
         assert_ne!(key_list1[1], key_list2[1]);
         assert_ne!(key_list1[0], key_list2[1]);
-        assert_eq!(key_list1[1], key_list2[0]);
     }
 
     #[test]
@@ -83,13 +105,13 @@ mod tests {
         let mut generator = RandomGeneratorSha256::new(seed);
         
         let address1 = Address {level: 0, position: 19};
-        let key_list1 = generator.get_keys(2, &address1);
+        let key_list1 = generator.get_keys::<2>(&address1, InnerKeyRole::MessageKey);
         
         assert_eq!(key_list1.len(), 2);
         assert_ne!(key_list1[0], key_list1[1]);
         
         let address2 = Address {level: 1, position: 19};
-        let key_list2 = generator.get_keys(2, &address2);
+        let key_list2 = generator.get_keys::<2>(&address2, InnerKeyRole::MessageKey);
         
         assert_eq!(key_list2.len(), 2);
         assert_ne!(key_list2[0], key_list2[1]);
@@ -106,7 +128,7 @@ mod tests {
         let mut generator1 = RandomGeneratorSha256::new(seed1);
         
         let address = Address {level: 0, position: 19};
-        let key_list1 = generator1.get_keys(2, &address);
+        let key_list1 = generator1.get_keys::<2>(&address, InnerKeyRole::MessageKey);
         
         assert_eq!(key_list1.len(), 2);
         assert_ne!(key_list1[0], key_list1[1]);
@@ -115,7 +137,7 @@ mod tests {
         seed2[0] = 1;
 
         let mut generator2 = RandomGeneratorSha256::new(seed2);
-        let key_list2 = generator2.get_keys(2, &address);
+        let key_list2 = generator2.get_keys::<2>(&address, InnerKeyRole::MessageKey);
         
         assert_eq!(key_list2.len(), 2);
         assert_ne!(key_list2[0], key_list2[1]);
@@ -132,7 +154,7 @@ mod tests {
         let mut generator1 = RandomGeneratorSha256::new(seed1);
         
         let address = Address {level: 0, position: 19};
-        let key_list1 = generator1.get_keys(2, &address);
+        let key_list1 = generator1.get_keys::<2>(&address, InnerKeyRole::MessageKey);
         
         assert_eq!(key_list1.len(), 2);
         assert_ne!(key_list1[0], key_list1[1]);
@@ -140,7 +162,7 @@ mod tests {
         let seed2:HashData = [0;32];
 
         let mut generator2 = RandomGeneratorSha256::new(seed2);
-        let key_list2 = generator2.get_keys(2, &address);
+        let key_list2 = generator2.get_keys::<2>(&address, InnerKeyRole::MessageKey);
         
         assert_eq!(key_list2.len(), 2);
         assert_ne!(key_list2[0], key_list2[1]);
