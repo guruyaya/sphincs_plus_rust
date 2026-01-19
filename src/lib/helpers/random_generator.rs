@@ -63,9 +63,9 @@ impl RandomGeneratorSha256 {
         RandomGeneratorSha256 { seed }
     }
 
-    pub fn get_keys<const NumKeys: usize>(&mut self, address: &Address, role: InnerKeyRole) -> [HashData;NumKeys] {
-        let mut out = [[0u8; 32];NumKeys];
-        for i in 0..NumKeys {
+    pub fn get_keys<const NUM_KEYS: usize>(&mut self, address: &Address, role: InnerKeyRole) -> [HashData;NUM_KEYS] {
+        let mut out = [[0u8; 32];NUM_KEYS];
+        for i in 0..NUM_KEYS {
             out[i] = get_key(self.seed, address, &role, i)
         };
         out
