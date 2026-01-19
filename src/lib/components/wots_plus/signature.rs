@@ -10,7 +10,7 @@ pub struct WotsPlusSignature {
 }
 
 impl WotsPlusSignature {
-    pub fn new(start_address: Address, public_seed: HashData, message_hashes: [HashData;32], checksum_hashes: [HashData; 2]) {
+    pub fn new(_start_address: Address, _public_seed: HashData, _message_hashes: [HashData;32], _checksum_hashes: [HashData; 2]) {
         todo!();
     }
     pub fn calculate_target_key(&self) -> HashData {

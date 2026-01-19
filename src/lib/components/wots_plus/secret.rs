@@ -48,7 +48,7 @@ impl WotsPlus {
         Self::new(seed, public_seed, &address)
     }
 
-    pub fn generate_public_key(&self) -> WotsPlusPublic {
+    pub fn generate_public_key(&self) -> WotsPlusPublic<'_> {
         let mut public_keyset = [[0u8;32];34];
         let context = HashContext(self.public_seed, &self.address);
 
@@ -64,11 +64,11 @@ impl WotsPlus {
         WotsPlusPublic { start_address: &self.address, public_seed: self.public_seed, public_key: public_key}
     }
     
-    pub fn sign_hash(&self, hash: HashData) -> WotsPlusSignature {
+    pub fn sign_hash(&self, _hash: HashData) -> WotsPlusSignature {
         todo!()
     }
     
-    pub fn sign_message(&self, message: &[u8]) -> WotsPlusSignature {
+    pub fn sign_message(&self, _message: &[u8]) -> WotsPlusSignature {
        todo!();
     }
     

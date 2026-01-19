@@ -1,6 +1,6 @@
 use sha2::{Sha256, Digest, digest::Update};
 
-use crate::lib::helpers::random_generator::{Address, HashData, InnerKeyRole};
+use crate::lib::helpers::random_generator::{Address, HashData};
 
 pub struct HashContext<'a>(pub HashData, pub &'a Address);
 

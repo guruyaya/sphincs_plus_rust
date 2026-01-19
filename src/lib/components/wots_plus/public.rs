@@ -11,11 +11,11 @@ pub struct WotsPlusPublic<'a> {
 
 impl<'a> WotsPlusPublic<'a> {
     
-    pub fn validate_hash(&self, hash: HashData, sign: &WotsPlusSignature) -> bool {
+    pub fn validate_hash(&self, _hash: HashData, _sign: &WotsPlusSignature) -> bool {
         todo!()
     }
 
-    pub fn validate_message(&self, message: &[u8], sign: &WotsPlusSignature) -> bool {
+    pub fn validate_message(&self, _message: &[u8], _sign: &WotsPlusSignature) -> bool {
         todo!()
     }
 
