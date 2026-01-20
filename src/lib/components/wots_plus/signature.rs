@@ -36,24 +36,54 @@ impl<'a> WotsPlusSignature {
         Update::update(&mut message_hash, message);
         self.clone().get_expected_public_from_hash(&message_hash.finalize().into())
     }
-    pub fn to_bytes(&self) -> [u8; 42] {
-        todo!()
+    
+    pub fn to_bytes(&self) -> [u8; 1130] {
+        let mut out = [08;1130];
+        out[..42].copy_from_slice(&self.context.to_bytes());
+
+        let mut offset = 42;
+        for hash in self.message_hashes {
+            out[offset..offset+32].copy_from_slice(&hash);
+            offset += 32;
+        };
+        
+        for hash in self.checksum_hashes {
+            out[offset..offset+32].copy_from_slice(&hash);
+            offset += 32;
+        };
+
+        out
     }
     
-    pub fn from_bytes(_bytes: [u8; 42]) -> Self{
-        todo!()
+    pub fn from_bytes(bytes: [u8; 1130]) -> Self{
+        let context_bytes:[u8;42] = bytes[..42].try_into().expect("Wrong size / datatype passed");
+        let context = HashContext::from_bytes(context_bytes);
+
+        let mut message_hashes:[HashData;32] = [[0u8;32];32];
+        let message_hashes_part = &bytes[42..1066];
+        for i in 0..32{
+            message_hashes[i].copy_from_slice(&message_hashes_part[i*32..(i+1)*32]);
+        }
+        
+        let mut checksum_hashes:[HashData;2] = [[0u8;32];2];
+        let checksum_hashes_part = &bytes[1066..];
+        for i in 0..2{
+            checksum_hashes[i].copy_from_slice(&checksum_hashes_part[i*32..(i+1)*32]);
+        }
+        
+        Self{context: context, message_hashes: message_hashes, checksum_hashes: checksum_hashes}
     }
 }
 #[cfg(test)]
 mod tests {
     use crate::lib::{components::wots_plus::{secret::WotsPlus, signature::WotsPlusSignature}, helpers::{hasher::HashContext, random_generator::Address}};
-
+    
     #[test]
     fn test_to_from_bytes() {
         const MESSAGE:&[u8] = "Hello from rust sphincs".as_bytes();
 
         let context = HashContext{public_seed: [2u8;32], address: Address{level: 2, position: 11}};
-        let other_context = HashContext{public_seed: [2u8;32], address: Address{level: 2, position: 11}};
+        let other_context = HashContext{public_seed: [3u8;32], address: Address{level: 2, position: 11}};
         
         let wots1 = WotsPlus::new([9u8;32], context.clone());
         let wots2 = WotsPlus::new([7u8;32], context.clone());
@@ -68,8 +98,12 @@ mod tests {
         let sign_from_bytes = WotsPlusSignature::from_bytes(bytes_sign1);
 
         assert_eq!(signature1, sign_from_bytes);
+    
         assert_ne!(sign_from_bytes.message_hashes, signature2.message_hashes);
         assert_ne!(sign_from_bytes.message_hashes, signature_other.message_hashes);
+    
+        assert_ne!(sign_from_bytes.checksum_hashes, signature2.checksum_hashes);
+        assert_ne!(sign_from_bytes.checksum_hashes, signature_other.checksum_hashes);
     
         let pub1 = signature1.get_expected_public_from_message(MESSAGE);
         let pub_bytes = sign_from_bytes.get_expected_public_from_message(MESSAGE);
