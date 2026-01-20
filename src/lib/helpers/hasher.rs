@@ -4,11 +4,11 @@ use sha2::{Sha256, Digest, digest::Update};
 
 use crate::lib::helpers::random_generator::{Address, HashData};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct HashContext(pub HashData, pub Address);
 
 impl HashContext{
-    fn to_bytes(&self) -> [u8;42] {
+    pub fn to_bytes(&self) -> [u8;42] {
         let mut out = [0u8;42];
         out[..32].copy_from_slice(&self.0);
         out[32..].copy_from_slice(&self.1.to_bytes());

@@ -7,13 +7,13 @@ use super::public::WotsPlusPublic;
 pub struct SeedPair(pub HashData, pub HashData); // private_seed, public_seed
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SecretKeysPair{
     message: [HashData;32],
     checksum: [HashData;2]
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct WotsPlus {
     seed: HashData,
     
@@ -27,7 +27,7 @@ impl WotsPlus {
         SeedPair(rand::random(), rand::random())
     }
 
-    fn generate_secret_keys(seed: HashData, address: Address) -> SecretKeysPair{
+    fn generate_secret_keys(seed: HashData, address: &Address) -> SecretKeysPair{
         let mut rndgen = RandomGeneratorSha256::new(seed);
         let message_keys = rndgen.get_keys::<32>(&address, InnerKeyRole::MessageKey);
         let checksum_keys = rndgen.get_keys::<2>(&address, InnerKeyRole::ChecksumKey);
@@ -39,14 +39,13 @@ impl WotsPlus {
 
     }
 
-    pub fn new(seed: HashData, public_seed: HashData, address: Address) -> Self {
-        let context = HashContext(public_seed, address.clone());
-        Self {seed: seed, secret_keys: Self::generate_secret_keys(seed, address), context: context}
+    pub fn new(seed: HashData, context: HashContext) -> Self {
+        Self {seed: seed, secret_keys: Self::generate_secret_keys(seed, &context.1), context: context}
     }
 
     pub fn new_random(address: Address) -> Self {
         let SeedPair(seed, public_seed) = Self::gen_true_random_keys();
-        Self::new(seed, public_seed, address.clone())
+        Self::new(seed, HashContext(public_seed, address.clone()))
     }
 
     pub fn generate_public_key(&self) -> WotsPlusPublic {
@@ -90,12 +89,37 @@ impl WotsPlus {
        self.sign_hash(message_hush.finalize().into())
     }
     
-    pub fn to_bytes(&self) -> [u8; 42] {
-        todo!()
+    pub fn to_bytes(&self) -> [u8; 74] {
+        let mut out = [0u8;74];
+        out[..32].copy_from_slice(&self.seed);
+        out[32..].copy_from_slice(&self.context.to_bytes());
+
+        out
     }
     
-    pub fn from_bytes(_bytes: [u8; 42]) -> Self{
-        todo!()
+    pub fn from_bytes(bytes: [u8; 74]) -> Self{
+        todo!();
     }
-    
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lib::helpers::{hasher::HashContext, random_generator::Address};
+
+    use super::WotsPlus;
+
+    #[test]
+    fn test_to_from_bytes() {
+        let wots = WotsPlus::new([9u8;32], HashContext([10u8;32], Address{level: 1, position: 1}));
+        let other_wots = WotsPlus::new([7u8;32], HashContext([90u8;32], Address{level: 2, position: 1}));
+        
+        let bytes_wots = wots.to_bytes();
+        let bytes_other_wots = other_wots.to_bytes();
+
+        let new_wots = WotsPlus::from_bytes(bytes_wots);
+        let new_other_wots = WotsPlus::from_bytes(bytes_other_wots);
+
+        assert_eq!(wots, new_wots);
+        assert_ne!(wots, new_other_wots);
+    }
 }
