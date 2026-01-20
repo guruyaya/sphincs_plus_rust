@@ -65,24 +65,24 @@ mod tests {
 
     #[test]
     fn test_signature_on_message() {
-        let message = "Hello from SPHINCS+ on rust".as_bytes();
+        const MESSAGE:&[u8] = "Hello from SPHINCS+ on rust".as_bytes();
         let other_message = "Bye from SPHINCS+ on rust".as_bytes();
         
         let address = Address {level: 1, position: 9000};
         let wots = WotsPlus::new_random(address.clone());
         let public = wots.generate_public_key();
         
-        let signature = wots.sign_message(&message);
+        let signature = wots.sign_message(&MESSAGE);
         let other_signature = wots.sign_message(&other_message);
         
-        let expected_pubkey1 = signature.get_expected_public_from_message(&message);
+        let expected_pubkey1 = signature.get_expected_public_from_message(&MESSAGE);
         let expected_pubkey2 = other_signature.get_expected_public_from_message(&other_message);
         
         assert_eq!(expected_pubkey2, expected_pubkey1);
 
         assert_eq!(public.public_key, expected_pubkey1);
 
-        assert!(public.validate_message(message, &signature));
+        assert!(public.validate_message(MESSAGE, &signature));
         assert!(public.validate_message(other_message, &other_signature));
         
         assert!(public.validate_message(other_message, &signature) == false);
