@@ -1,16 +1,25 @@
+use std::ops::Add;
+
 use sha2::{Sha256, Digest, digest::Update};
 
 use crate::lib::helpers::random_generator::{Address, HashData};
 
-#[derive(Debug)]
-pub struct HashContext<'a>(pub HashData, pub &'a Address);
+#[derive(Debug, Clone)]
+pub struct HashContext(pub HashData, pub Address);
 
-impl<'a> HashContext<'a>{
+impl HashContext{
     fn to_bytes(&self) -> [u8;42] {
         let mut out = [0u8;42];
         out[..32].copy_from_slice(&self.0);
         out[32..].copy_from_slice(&self.1.to_bytes());
         out
+    }
+
+    pub fn from_bytes(bytes:[u8;42]) -> Self {
+        let pubkey = bytes[0..32].try_into().expect("Unexpected byte size provided");
+        let address_bytes = bytes[32..].try_into().expect("Unexpected byte size provided");
+        let address = Address::from_bytes(address_bytes);
+        Self(pubkey, address)
     }
 }
 pub fn repeat_hash(to_hash: HashData, times_to_repeat: u8, context: &HashContext) -> [u8;32] {
@@ -37,6 +46,8 @@ pub fn hash_vector(hashes: &[HashData]) -> HashData{
 
 #[cfg(test)]
 mod tests {
+    use std::{hash::Hash, ops::Add};
+
     use rand;
     use super::*;
     use crate::lib::helpers::random_generator::{Address, InnerKeyRole, RandomGeneratorSha256};
@@ -44,7 +55,7 @@ mod tests {
     #[test]
     fn test_repeated_hash_same_when_zero(){
         let initial_random:  [u8;32] = rand::random();
-        let context = HashContext([8;32], &Address { level: 10, position: 15 });
+        let context = HashContext([8;32], Address { level: 10, position: 15 });
         let hashed_random = repeat_hash(initial_random, 0, &context);
         
         assert_eq!(initial_random, hashed_random);
@@ -53,7 +64,7 @@ mod tests {
     #[test]
     fn test_complement(){
         let initial_random:  [u8;32] = [0;32];
-        let context = HashContext([8;32], &Address { level: 10, position: 15 });
+        let context = HashContext([8;32], Address { level: 10, position: 15 });
         
         let hashed_random = repeat_hash(initial_random, 2, &context);
         let simulated_complete = complement_hash(initial_random, 253, &context);
@@ -65,7 +76,7 @@ mod tests {
     #[test]
     fn test_to_target(){
         let initial_random:  [u8;32] = [0;32];
-        let context = HashContext([8;32], &Address { level: 10, position: 15 });
+        let context = HashContext([8;32], Address { level: 10, position: 15 });
         
         let hashed_random1 = repeat_hash(initial_random, 2, &context);
         let simulated_complete1 = complement_hash(hashed_random1, 2, &context);
@@ -80,7 +91,7 @@ mod tests {
     #[test]
     fn test_target(){
         let initial_random:  [u8;32] = [0;32];
-        let context = HashContext([8;32], &Address { level: 10, position: 15 });
+        let context = HashContext([8;32], Address { level: 10, position: 15 });
         
         let target_hash = repeat_hash(initial_random, 255, &context);
         let hashed_random = repeat_hash(initial_random, 2, &context);
@@ -115,10 +126,10 @@ mod tests {
         let to_hash = random_initial.get_keys::<1>(&address, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
-        let context1 = HashContext([8;32], &address);
+        let context1 = HashContext([8;32], address.clone());
         let repeat1 = repeat_hash(to_hash, 5, &context1);
         
-        let context2 = HashContext([9;32], &address);
+        let context2 = HashContext([9;32], address.clone());
         let repeat2 = repeat_hash(to_hash, 5, &context2);
         
         assert_eq!(to_hash, to_hash_clone);
@@ -134,10 +145,10 @@ mod tests {
         let to_hash = random_initial.get_keys::<1>(&address1, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
-        let context1 = HashContext([8;32], &address1);
+        let context1 = HashContext([8;32], address1.clone());
         let repeat1 = repeat_hash(to_hash, 5, &context1);
         
-        let context2 = HashContext([8;32], &address2);
+        let context2 = HashContext([8;32], address2.clone());
         let repeat2 = repeat_hash(to_hash, 5, &context2);
         
         assert_eq!(to_hash, to_hash_clone);
@@ -154,10 +165,10 @@ mod tests {
         let to_hash = random_initial.get_keys::<1>(address1, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
-        let context1 = HashContext([8;32], &address1);
+        let context1 = HashContext([8;32], address1.clone());
         let repeat1 = repeat_hash(to_hash, 5, &context1);
         
-        let context2 = HashContext([9;32], &address2);
+        let context2 = HashContext([9;32], address2.clone());
         let repeat2 = repeat_hash(to_hash, 5, &context2);
         
         assert_eq!(to_hash, to_hash_clone);
@@ -175,10 +186,10 @@ mod tests {
         let to_hash = random_initial.get_keys::<1>(address1, InnerKeyRole::MessageKey)[0];
         let to_hash_clone = to_hash.clone();
         
-        let context1 = HashContext([8;32], &address1);
+        let context1 = HashContext([8;32], address1.clone());
         let repeat1 = repeat_hash(to_hash, 5, &context1);
         
-        let context2 = HashContext([8;32], &address2);
+        let context2 = HashContext([8;32], address2.clone());
         let repeat2 = repeat_hash(to_hash, 5, &context2);
         
         assert_eq!(to_hash, to_hash_clone);
@@ -186,4 +197,16 @@ mod tests {
 
     }
     
+    #[test]
+    fn test_context_to_from_bytes() {
+        let address = Address{level: 11, position: 64};
+        let context = HashContext([9u8;32], address.clone());
+
+        let bytes_dump = context.to_bytes();
+
+        let new_context = HashContext::from_bytes(bytes_dump);
+
+        assert_eq!(new_context.0, context.0);
+        assert_eq!(new_context.1, context.1);
+    }
 }

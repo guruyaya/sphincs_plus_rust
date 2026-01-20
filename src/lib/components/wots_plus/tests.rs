@@ -36,8 +36,8 @@ mod tests {
         let address = Address {level: 1, position: 9000};
         let SeedPair(seed, public_seed) = gen_private_public_from_seed(&address);
         
-        let secret1 = WotsPlus::new(seed, public_seed, &address);
-        let secret2 = WotsPlus::new(seed, public_seed, &address);
+        let secret1 = WotsPlus::new(seed, public_seed, address.clone());
+        let secret2 = WotsPlus::new(seed, public_seed, address.clone());
         
         assert_eq!(secret1.generate_public_key().public_key, secret2.generate_public_key().public_key);
     }
@@ -50,9 +50,9 @@ mod tests {
         let mut address2 = address.clone();
         address2.position = 9001;
         
-        let secret1 = WotsPlus::new(seed, public_seed, &address);
+        let secret1 = WotsPlus::new(seed, public_seed, address.clone());
         // Knowingly providing the wrong address, for the test
-        let secret2 = WotsPlus::new(seed, public_seed, &address2);
+        let secret2 = WotsPlus::new(seed, public_seed, address2.clone());
         
         let pub1 = secret1.generate_public_key().public_key;
         let pub2 = secret2.generate_public_key().public_key;
@@ -66,21 +66,26 @@ mod tests {
     #[test]
     fn test_signature_on_message() {
         let message = "Hello from SPHINCS+ on rust".as_bytes();
+        let other_message = "Bye from SPHINCS+ on rust".as_bytes();
         
         let address = Address {level: 1, position: 9000};
-        let wots = WotsPlus::new_random(&address);
+        let wots = WotsPlus::new_random(address.clone());
         let public = wots.generate_public_key();
-        let signature = wots.sign_message(message);
         
+        let signature = wots.sign_message(&message);
+        let other_signature = wots.sign_message(&other_message);
+        
+        let expected_pubkey1 = signature.get_expected_public_from_message(&message);
+        let expected_pubkey2 = other_signature.get_expected_public_from_message(&other_message);
+        
+        assert_eq!(expected_pubkey2, expected_pubkey1);
+
+        assert_eq!(public.public_key, expected_pubkey1);
+
         assert!(public.validate_message(message, &signature));
+        assert!(public.validate_message(other_message, &other_signature));
         
-        let wrong_message = "Bye from SPHINCS+ on rust".as_bytes();
-        
-        assert!(public.validate_message(wrong_message, &signature) == false);
-        
-        let wrong_signature = wots.sign_message(wrong_message);
-        
-        assert!(public.validate_message(wrong_message, &wrong_signature) == false);
+        assert!(public.validate_message(other_message, &signature) == false);
     }
 
     // TODO: Test from bytes and to bytes

@@ -1,4 +1,4 @@
-use crate::lib::{components::wots_plus::signature::WotsPlusSignature, 
+use crate::lib::{components::wots_plus::signature::{WotsPlusSignature, MAX_HASHES_NEEDED}, 
     helpers::{hasher::{HashContext, hash_vector, repeat_hash}, 
     random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256}}};
 use rand;
@@ -14,23 +14,23 @@ pub struct SecretKeysPair{
 }
 
 #[derive(Debug)]
-pub struct WotsPlus<'a> {
+pub struct WotsPlus {
     seed: HashData,
     
     secret_keys: SecretKeysPair,
-    pub context: HashContext<'a>
+    pub context: HashContext
 }
 
-impl<'a> WotsPlus<'a> {
+impl WotsPlus {
     
     pub fn gen_true_random_keys() -> SeedPair{
         SeedPair(rand::random(), rand::random())
     }
 
-    fn generate_secret_keys(seed: HashData, address: &'a Address) -> SecretKeysPair{
+    fn generate_secret_keys(seed: HashData, address: Address) -> SecretKeysPair{
         let mut rndgen = RandomGeneratorSha256::new(seed);
-        let message_keys = rndgen.get_keys::<32>(address, InnerKeyRole::MessageKey);
-        let checksum_keys = rndgen.get_keys::<2>(address, InnerKeyRole::ChecksumKey);
+        let message_keys = rndgen.get_keys::<32>(&address, InnerKeyRole::MessageKey);
+        let checksum_keys = rndgen.get_keys::<2>(&address, InnerKeyRole::ChecksumKey);
         
         SecretKeysPair {
             message: message_keys,
@@ -39,20 +39,19 @@ impl<'a> WotsPlus<'a> {
 
     }
 
-    pub fn new(seed: HashData, public_seed: HashData, address: &'a Address) -> Self {
-        let context = HashContext(public_seed, address);
+    pub fn new(seed: HashData, public_seed: HashData, address: Address) -> Self {
+        let context = HashContext(public_seed, address.clone());
         Self {seed: seed, secret_keys: Self::generate_secret_keys(seed, address), context: context}
     }
 
-    pub fn new_random(address: &'a Address) -> Self {
+    pub fn new_random(address: Address) -> Self {
         let SeedPair(seed, public_seed) = Self::gen_true_random_keys();
-        Self::new(seed, public_seed, address)
+        Self::new(seed, public_seed, address.clone())
     }
 
-    pub fn generate_public_key(&self) -> WotsPlusPublic<'_> {
+    pub fn generate_public_key(&self) -> WotsPlusPublic {
         let mut public_keyset = [[0u8;32];34];
         
-
         for (index, sk) in self.secret_keys.message.iter().enumerate(){
             public_keyset[index] = repeat_hash(*sk, 255, &self.context);
         };
@@ -62,29 +61,29 @@ impl<'a> WotsPlus<'a> {
         };
 
         let public_key = hash_vector(&public_keyset);
-        WotsPlusPublic { public_key: public_key, context: &self.context}
+        WotsPlusPublic { public_key: public_key, context: self.context.clone()}
     }
     
-    pub fn sign_hash(&self, _hash: HashData) -> WotsPlusSignature<'_> {
-        let mut count_hashes: u16 = 0;
+    pub fn sign_hash(&self, _hash: HashData) -> WotsPlusSignature {
+        let mut count_hashes_left: u16 = MAX_HASHES_NEEDED;
         let mut message_hashes = [[0u8;32]; 32];
         let mut checksum_hashes = [[0u8;32]; 2];
         
-
         for (index, times_to_repeat) in _hash.into_iter().enumerate() {
             let key = self.secret_keys.message[index];
             message_hashes[index] = repeat_hash(key, times_to_repeat, &self.context);
-            count_hashes = count_hashes + times_to_repeat as u16; 
+            count_hashes_left = count_hashes_left - times_to_repeat as u16; 
         };
-        let two_bytes = count_hashes.to_le_bytes();
+        dbg!("Times left secret {}", count_hashes_left);
+        let two_bytes = count_hashes_left.to_le_bytes();
         for (index, times_to_repeat) in two_bytes.into_iter().enumerate() {
             let key = self.secret_keys.checksum[index];
             checksum_hashes[index] = repeat_hash(key, times_to_repeat.clone(), &self.context);
         };
-        return WotsPlusSignature {checksum_hashes: checksum_hashes, context: &self.context, message_hashes: message_hashes}
+        return WotsPlusSignature {checksum_hashes: checksum_hashes, context: self.context.clone(), message_hashes: message_hashes}
     }
     
-    pub fn sign_message(&self, _message: &[u8]) -> WotsPlusSignature<'_> {
+    pub fn sign_message(&self, _message: &[u8]) -> WotsPlusSignature {
        let mut message_hush = Sha256::default();
        Update::update(&mut message_hush, _message);
 
