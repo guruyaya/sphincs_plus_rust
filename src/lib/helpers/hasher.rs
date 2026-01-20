@@ -199,14 +199,20 @@ mod tests {
     
     #[test]
     fn test_context_to_from_bytes() {
-        let address = Address{level: 11, position: 64};
-        let context = HashContext([9u8;32], address.clone());
+
+        let context = HashContext([9u8;32], Address{level: 11, position: 64});
+        let other_context = HashContext([10u8;32], Address{level: 12, position: 64});
 
         let bytes_dump = context.to_bytes();
+        let other_bytes_dump = other_context.to_bytes();
 
         let new_context = HashContext::from_bytes(bytes_dump);
+        let new_other_context = HashContext::from_bytes(other_bytes_dump);
 
         assert_eq!(new_context.0, context.0);
         assert_eq!(new_context.1, context.1);
+
+        assert_ne!(new_context.0, new_other_context.0);
+        assert_ne!(new_context.1, new_other_context.1);
     }
 }
