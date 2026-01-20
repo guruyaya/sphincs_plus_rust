@@ -23,7 +23,7 @@ impl InnerKeyRole {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Address {
     pub level: u16,
     pub position: u64
@@ -32,11 +32,21 @@ pub struct Address {
 impl Address {
     pub fn to_bytes(&self) -> [u8;10]{
         let mut out = [0u8;10];
-        out[..2].copy_from_slice(&self.level.to_be_bytes());
-        out[2..].copy_from_slice(&self.position.to_be_bytes());
+        out[..2].copy_from_slice(&self.level.to_le_bytes());
+        out[2..].copy_from_slice(&self.position.to_le_bytes());
         out
     }
+
+    pub fn from_bytes(bytes: [u8;10]) -> Self {
+        let level_bytes:[u8;2] = bytes[0..2].try_into().expect("Got unexpected bites size?");
+        let position_bytes:[u8; 8] = bytes[2..].try_into().expect("Got unexpected bites size?");
+        let level = u16::from_le_bytes(level_bytes);
+        let position = u64::from_le_bytes(position_bytes);
+        
+        Self{level: level, position: position}
+    }
 }
+
 fn get_key(seed: HashData, address: &Address, role: &InnerKeyRole, role_pos: usize) -> HashData {
     let mut hasher = Sha256::default();
     Update::update(&mut hasher, &seed);
@@ -63,9 +73,9 @@ impl RandomGeneratorSha256 {
         RandomGeneratorSha256 { seed }
     }
 
-    pub fn get_keys<const NumKeys: usize>(&mut self, address: &Address, role: InnerKeyRole) -> [HashData;NumKeys] {
-        let mut out = [[0u8; 32];NumKeys];
-        for i in 0..NumKeys {
+    pub fn get_keys<const NUM_KEYS: usize>(&mut self, address: &Address, role: InnerKeyRole) -> [HashData;NUM_KEYS] {
+        let mut out = [[0u8; 32];NUM_KEYS];
+        for i in 0..NUM_KEYS {
             out[i] = get_key(self.seed, address, &role, i)
         };
         out
