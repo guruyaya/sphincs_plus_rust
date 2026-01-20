@@ -36,8 +36,8 @@ mod tests {
         let address = Address {level: 1, position: 9000};
         let SeedPair(seed, public_seed) = gen_private_public_from_seed(&address);
         
-        let secret1 = WotsPlus::new(seed, HashContext(public_seed, address.clone()));
-        let secret2 = WotsPlus::new(seed, HashContext(public_seed, address.clone()));
+        let secret1 = WotsPlus::new(seed, HashContext { public_seed, address: address.clone() });
+        let secret2 = WotsPlus::new(seed, HashContext { public_seed, address: address.clone() });
         
         assert_eq!(secret1.generate_public_key().public_key, secret2.generate_public_key().public_key);
     }
@@ -50,9 +50,9 @@ mod tests {
         let mut address2 = address.clone();
         address2.position = 9001;
         
-        let secret1 = WotsPlus::new(seed, HashContext(public_seed, address.clone()));
+        let secret1 = WotsPlus::new(seed, HashContext { public_seed, address: address.clone() });
         // Knowingly providing the wrong address, for the test
-        let secret2 = WotsPlus::new(seed, HashContext(public_seed, address2.clone()));
+        let secret2 = WotsPlus::new(seed, HashContext { public_seed, address: address2.clone() });
         
         let pub1 = secret1.generate_public_key().public_key;
         let pub2 = secret2.generate_public_key().public_key;

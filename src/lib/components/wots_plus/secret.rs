@@ -40,12 +40,12 @@ impl WotsPlus {
     }
 
     pub fn new(seed: HashData, context: HashContext) -> Self {
-        Self {seed: seed, secret_keys: Self::generate_secret_keys(seed, &context.1), context: context}
+        Self {seed: seed, secret_keys: Self::generate_secret_keys(seed, &context.address), context: context}
     }
 
     pub fn new_random(address: Address) -> Self {
         let SeedPair(seed, public_seed) = Self::gen_true_random_keys();
-        Self::new(seed, HashContext(public_seed, address.clone()))
+        Self::new(seed, HashContext { public_seed, address: address.clone() })
     }
 
     pub fn generate_public_key(&self) -> WotsPlusPublic {
@@ -98,7 +98,10 @@ impl WotsPlus {
     }
     
     pub fn from_bytes(bytes: [u8; 74]) -> Self{
-        todo!();
+        let seed:[u8;32] = bytes[..32].try_into().expect("Got the wrong size bytes");
+        let context_bytes:[u8;42] = bytes[32..].try_into().expect("Got the wrong size bytes");
+        let context = HashContext::from_bytes(context_bytes);
+        Self::new(seed, context)
     }
 }
 
@@ -110,8 +113,8 @@ mod tests {
 
     #[test]
     fn test_to_from_bytes() {
-        let wots = WotsPlus::new([9u8;32], HashContext([10u8;32], Address{level: 1, position: 1}));
-        let other_wots = WotsPlus::new([7u8;32], HashContext([90u8;32], Address{level: 2, position: 1}));
+        let wots = WotsPlus::new([9u8;32], HashContext { public_seed: [10u8;32], address: Address{level: 1, position: 1} });
+        let other_wots = WotsPlus::new([7u8;32], HashContext { public_seed: [90u8;32], address: Address{level: 2, position: 1} });
         
         let bytes_wots = wots.to_bytes();
         let bytes_other_wots = other_wots.to_bytes();
