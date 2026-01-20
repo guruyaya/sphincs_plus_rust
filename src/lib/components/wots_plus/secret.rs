@@ -73,7 +73,7 @@ impl WotsPlus {
             message_hashes[index] = repeat_hash(key, times_to_repeat, &self.context);
             count_hashes_left = count_hashes_left - times_to_repeat as u16; 
         };
-        dbg!("Times left secret {}", count_hashes_left);
+        
         let two_bytes = count_hashes_left.to_le_bytes();
         for (index, times_to_repeat) in two_bytes.into_iter().enumerate() {
             let key = self.secret_keys.checksum[index];
