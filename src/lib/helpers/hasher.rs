@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use sha2::{Sha256, Digest, digest::Update};
 
 use crate::lib::helpers::random_generator::{Address, HashData};
@@ -9,6 +11,9 @@ pub struct HashContext {
 }
 
 impl HashContext{
+    pub fn default() -> Self {
+        Self{public_seed: [0u8;32], address: Address{level: 0, position: 0}}
+    }
     pub fn to_bytes(&self) -> [u8;42] {
         let mut out = [0u8;42];
         out[..32].copy_from_slice(&self.public_seed);
