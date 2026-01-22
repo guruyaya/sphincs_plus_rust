@@ -4,9 +4,6 @@ use crate::lib::{
     components::wots_plus::{public::WotsPlusPublic, secret::WotsPlus, signature::WotsPlusSignature}, helpers::{hasher::HashContext, random_generator::HashData}
 };
 
-pub enum MerkleProofError {
-    GeneralError
-}
 pub struct MerkleProof<const TREE_HEIGHT:usize> { // TREE_HEIGHT is Signer.height-1
     pub public_key: HashData,
     pub message_hash: HashData,
@@ -14,40 +11,43 @@ pub struct MerkleProof<const TREE_HEIGHT:usize> { // TREE_HEIGHT is Signer.heigh
     pub merkle_leaves: [HashData;TREE_HEIGHT]
 }
 
+
+#[derive(Debug)]
 pub struct MerkleSigner<const TREE_HEIGHT:usize> {
     seed: HashData,
     pub context: HashContext,
-    pub height: usize,
-
 }
 
-impl<const TREE_HEIGHT:usize> MerkleSigner<TREE_HEIGHT> {
+impl<const STEM_HEIGHT:usize> MerkleSigner<STEM_HEIGHT> {
     pub fn new(seed: HashData, context:HashContext) -> Self {
-        // valiadte the context address
-        // return self
-        todo!();
+        Self{seed, context}
     }
-
-    pub fn sign(&self, message: &[u8]) -> Result<MerkleProof<TREE_HEIGHT>, MerkleProofError>{
+    pub fn get_height(&self) -> usize{
+        // returns the full size of the tree
+        STEM_HEIGHT + 1
+    }
+    pub fn sign(&self, message: &[u8]) -> MerkleProof<STEM_HEIGHT> {
         todo!()
     }
 }
 
 #[macro_export]
 macro_rules! merkle_signer {
-    ($height:expr, $seed: expr, $context: expr) => {
-        // taking one down to repesent the real height
-        $crate::lib::components::merkle_tree::secret::MerkleSigner::<{ $height - 1 }>::new($seed, $context)
+    ($tree_height:expr, $seed: expr, $context: expr) => {
+        // taking one down to repesent the full tree height, including the root
+        $crate::lib::components::merkle_tree::secret::MerkleSigner::<{ $tree_height - 1 }>::new($seed, $context)
     };
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::lib::helpers::hasher::HashContext;
+    use crate::lib::{helpers::{hasher::HashContext}};
 
     #[test]
     fn test_create_merkle_signer() {
         let context = HashContext::default();
-        merkle_signer!(4, [0u8;32], context);
+        let signer = merkle_signer!(4, [0u8;32], context);
+
+        assert_eq!(signer.get_height(), 4);
     }
 }
