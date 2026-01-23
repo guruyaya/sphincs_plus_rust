@@ -1,8 +1,7 @@
 use crate::lib::{components::wots_plus::signature::{MAX_HASHES_NEEDED, WotsPlusSignature}, 
-    helpers::{hasher::{HashContext, hash_message, hash_vector, repeat_hash}, 
-    random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256}}};
+    helpers::{hasher::{HashContext, hash_message, hash_array, repeat_hash}, 
+    random_generator::{Address, HASH_DATA_0, HashData, InnerKeyRole, RandomGeneratorSha256}}};
 use rand;
-use sha2::{Digest, Sha256, digest::Update};
 use super::public::WotsPlusPublic;
 pub struct SeedPair(pub HashData, pub HashData); // private_seed, public_seed
 
@@ -13,7 +12,7 @@ pub struct SecretKeysPair{
     checksum: [HashData;2]
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct WotsPlus {
     seed: HashData,
     
@@ -49,7 +48,7 @@ impl WotsPlus {
     }
 
     pub fn generate_public_key(&self) -> WotsPlusPublic {
-        let mut public_keyset = [[0u8;32];34];
+        let mut public_keyset = [HASH_DATA_0;34];
         
         for (index, sk) in self.secret_keys.message.iter().enumerate(){
             public_keyset[index] = repeat_hash(*sk, 255, &self.context);
@@ -59,14 +58,14 @@ impl WotsPlus {
             public_keyset[32 + index] = repeat_hash(*sk, 255, &self.context);
         };
 
-        let public_key = hash_vector(&public_keyset);
+        let public_key = hash_array(&public_keyset);
         WotsPlusPublic { public_key: public_key, context: self.context.clone()}
     }
     
     pub fn sign_hash(&self, _hash: HashData) -> WotsPlusSignature {
         let mut count_hashes_left: u16 = MAX_HASHES_NEEDED;
-        let mut message_hashes = [[0u8;32]; 32];
-        let mut checksum_hashes = [[0u8;32]; 2];
+        let mut message_hashes = [HASH_DATA_0; 32];
+        let mut checksum_hashes = [HASH_DATA_0; 2];
         
         for (index, times_to_repeat) in _hash.into_iter().enumerate() {
             let key = self.secret_keys.message[index];
