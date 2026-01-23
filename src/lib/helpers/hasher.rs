@@ -1,5 +1,3 @@
-use std::ops::Add;
-
 use sha2::{Sha256, Digest, digest::Update};
 
 use crate::lib::helpers::random_generator::{Address, HashData};
@@ -28,6 +26,7 @@ impl HashContext{
         Self { public_seed: pubkey, address }
     }
 }
+
 pub fn repeat_hash(to_hash: HashData, times_to_repeat: u8, context: &HashContext) -> [u8;32] {
     let hash_step = to_hash.clone();
     (0..times_to_repeat).fold(hash_step, |acc, _| {
@@ -50,12 +49,28 @@ pub fn hash_vector(hashes: &[HashData]) -> HashData{
     hasher.finalize().into()
 }
 
+pub fn hash_message(message: &[u8]) -> HashData {
+    let mut message_hush = Sha256::default();
+    Update::update(&mut message_hush, message);
+
+    message_hush.finalize().into()
+}
 #[cfg(test)]
 mod tests {
     use rand;
     use super::*;
     use crate::lib::helpers::random_generator::{Address, InnerKeyRole, RandomGeneratorSha256};
-    
+
+    #[test]
+    fn test_hash_text() {
+        const MESSAGE1:&[u8] = "Bye from SPHINCS+ on rust".as_bytes();
+        let msg1_hash = hash_message(MESSAGE1);
+
+        const MESSAGE2:&[u8] = "Bye From SPHINCS+ on rust".as_bytes();
+        let msg2_hash = hash_message(MESSAGE2);
+
+        assert_ne!(msg1_hash, msg2_hash);
+    }
     #[test]
     fn test_repeated_hash_same_when_zero(){
         let initial_random:  [u8;32] = rand::random();
