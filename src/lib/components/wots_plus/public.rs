@@ -1,4 +1,4 @@
-use crate::lib::{components::wots_plus::signature::WotsPlusSignature, helpers::{hasher::HashContext, random_generator::{HashData}}};
+use crate::lib::{components::wots_plus::signature::WotsPlusSignature, helpers::{hasher::{HashContext, hash_message}, random_generator::HashData}};
 use sha2::{Digest, Sha256, digest::Update};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -14,10 +14,9 @@ impl WotsPlusPublic {
         sign.clone().get_expected_public_from_hash(&hash) == self.public_key
     }
 
-    pub fn validate_message(&self, _message: &[u8], _sign: &WotsPlusSignature) -> bool {
-       let mut message_hash = Sha256::default();
-       Update::update(&mut message_hash, _message);
-       self.validate_hash(message_hash.finalize().into(), _sign)
+    pub fn validate_message(&self, message: &[u8], _sign: &WotsPlusSignature) -> bool {
+        let message_hash = hash_message(message);
+        self.validate_hash(message_hash, _sign)
     }
 
     // Size: public_key (32) + public_seed (32) + address (10) = 74

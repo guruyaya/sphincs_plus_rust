@@ -1,5 +1,5 @@
-use crate::lib::{components::wots_plus::signature::{WotsPlusSignature, MAX_HASHES_NEEDED}, 
-    helpers::{hasher::{HashContext, hash_vector, repeat_hash}, 
+use crate::lib::{components::wots_plus::signature::{MAX_HASHES_NEEDED, WotsPlusSignature}, 
+    helpers::{hasher::{HashContext, hash_message, hash_vector, repeat_hash}, 
     random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256}}};
 use rand;
 use sha2::{Digest, Sha256, digest::Update};
@@ -82,11 +82,9 @@ impl WotsPlus {
         return WotsPlusSignature {checksum_hashes: checksum_hashes, context: self.context.clone(), message_hashes: message_hashes}
     }
     
-    pub fn sign_message(&self, _message: &[u8]) -> WotsPlusSignature {
-       let mut message_hush = Sha256::default();
-       Update::update(&mut message_hush, _message);
-
-       self.sign_hash(message_hush.finalize().into())
+    pub fn sign_message(&self, message: &[u8]) -> WotsPlusSignature {
+        let hashed = hash_message(message);
+        self.sign_hash(hashed)
     }
     
     pub fn to_bytes(&self) -> [u8; 74] {
