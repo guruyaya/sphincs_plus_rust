@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::lib::{components::wots_plus::secret::{SeedPair, WotsPlus}, helpers::{hasher::{HashContext, hash_message}, random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256, byte_array_to_hex}}};
+    use crate::lib::{components::wots_plus::secret::{SeedPair, WotsPlus}, helpers::{hasher::{HashContext, hash_message}, random_generator::{Address, HASH_DATA_0, HashData, InnerKeyRole, RandomGeneratorSha256, byte_array_to_hex}}};
     use std::collections::HashSet;
     
     fn gen_private_public_from_seed(address: &Address) -> SeedPair {
@@ -17,7 +17,7 @@ mod tests {
         let mut hashset_of_seeds = HashSet::<HashData>::default();
         
         // Adding some past hashes, to see they are not repeated
-        hashset_of_seeds.insert ([0u8;32]); // TODO: Acctually add some from debug data
+        hashset_of_seeds.insert (HASH_DATA_0); // TODO: Acctually add some from debug data
         let basline_size = hashset_of_seeds.len();
 
         for i in 0..100 {

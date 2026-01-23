@@ -1,5 +1,5 @@
 use sha2::{Digest, Sha256, digest::Update};
-use crate::lib::helpers::{hasher::{HashContext, complement_hash, hash_vector}, random_generator::HashData};
+use crate::lib::helpers::{hasher::{HashContext, complement_hash, hash_vector}, random_generator::{HASH_DATA_0, HashData}};
 
 pub const MAX_HASHES_NEEDED:u16 = 255 * 32;
 
@@ -13,7 +13,7 @@ pub struct WotsPlusSignature {
 impl<'a> WotsPlusSignature {
     pub fn get_expected_public_from_hash(self, message_hash: &HashData) -> HashData {
         let mut count_hashes_left: u16 = MAX_HASHES_NEEDED;
-        let mut out = [[0u8;32];34];
+        let mut out = [HASH_DATA_0;34];
 
         for (index, times_repeated) in message_hash.into_iter().enumerate() {
             let key = self.message_hashes[index];
@@ -59,13 +59,13 @@ impl<'a> WotsPlusSignature {
         let context_bytes:[u8;42] = bytes[..42].try_into().expect("Wrong size / datatype passed");
         let context = HashContext::from_bytes(context_bytes);
 
-        let mut message_hashes:[HashData;32] = [[0u8;32];32];
+        let mut message_hashes:[HashData;32] = [HASH_DATA_0;32];
         let message_hashes_part = &bytes[42..1066];
         for i in 0..32{
             message_hashes[i].copy_from_slice(&message_hashes_part[i*32..(i+1)*32]);
         }
         
-        let mut checksum_hashes:[HashData;2] = [[0u8;32];2];
+        let mut checksum_hashes:[HashData;2] = [HASH_DATA_0;2];
         let checksum_hashes_part = &bytes[1066..];
         for i in 0..2{
             checksum_hashes[i].copy_from_slice(&checksum_hashes_part[i*32..(i+1)*32]);

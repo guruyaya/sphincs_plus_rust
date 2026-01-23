@@ -1,6 +1,7 @@
 
 use sha2::{Sha256, Digest, digest::Update};
 pub type HashData = [u8;32];
+pub const HASH_DATA_0:[u8;32] = [0u8;32];
 
 pub fn byte_array_to_hex(data: &[u8]) -> String{
     data.iter().map(|b| format!("{:02x}", b)).collect()
@@ -74,7 +75,7 @@ impl RandomGeneratorSha256 {
     }
 
     pub fn get_keys<const NUM_KEYS: usize>(&mut self, address: &Address, role: InnerKeyRole) -> [HashData;NUM_KEYS] {
-        let mut out = [[0u8; 32];NUM_KEYS];
+        let mut out = [HASH_DATA_0;NUM_KEYS];
         for i in 0..NUM_KEYS {
             out[i] = get_key(self.seed, address, &role, i)
         };
