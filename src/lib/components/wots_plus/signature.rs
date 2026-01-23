@@ -1,5 +1,5 @@
 use sha2::{Digest, Sha256, digest::Update};
-use crate::lib::helpers::{hasher::{HashContext, complement_hash, hash_vector}, random_generator::{HASH_DATA_0, HashData}};
+use crate::lib::helpers::{hasher::{HashContext, complement_hash, hash_array}, random_generator::{HASH_DATA_0, HashData}};
 
 pub const MAX_HASHES_NEEDED:u16 = 255 * 32;
 
@@ -28,7 +28,7 @@ impl<'a> WotsPlusSignature {
             out[32 + index] = complement_hash(key, times_to_repeat.clone(), &self.context);
         };
 
-        hash_vector(&out)
+        hash_array(&out)
     }
 
     pub fn get_expected_public_from_message(&self, message:&[u8]) -> HashData {

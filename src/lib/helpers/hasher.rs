@@ -43,7 +43,7 @@ pub fn complement_hash(to_hash: HashData, times_repeated: u8, context: &HashCont
     return repeat_hash(to_hash, 255-times_repeated, &context)
 }
 
-pub fn hash_vector(hashes: &[HashData]) -> HashData{
+pub fn hash_array(hashes: &[HashData]) -> HashData{
     let mut hasher = Sha256::default();
     hashes.iter().for_each(|h| Update::update(&mut hasher, h));
     hasher.finalize().into()
@@ -124,15 +124,15 @@ mod tests {
     fn test_hash_vector() {
         let mut generator = RandomGeneratorSha256::new([3;32]);
         let hashes = generator.get_keys::<4>(&Address{level: 3, position: 9}, InnerKeyRole::MessageKey);
-        let out1 = hash_vector(&hashes);
+        let out1 = hash_array(&hashes);
         
         let new_hashes = vec![ hashes[1], hashes[0], hashes[2], hashes[3], ];
-        let out2 = hash_vector(&new_hashes);
+        let out2 = hash_array(&new_hashes);
         
         assert_ne!(out1, out2);
         
         let old_hash_back = vec![ new_hashes[1], new_hashes[0], new_hashes[2], new_hashes[3], ];
-        let out3 = hash_vector(&old_hash_back);
+        let out3 = hash_array(&old_hash_back);
         
         assert_eq!(out3, out1);
     }

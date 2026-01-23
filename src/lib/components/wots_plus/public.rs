@@ -1,5 +1,4 @@
 use crate::lib::{components::wots_plus::signature::WotsPlusSignature, helpers::{hasher::{HashContext, hash_message}, random_generator::HashData}};
-use sha2::{Digest, Sha256, digest::Update};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct WotsPlusPublic {
