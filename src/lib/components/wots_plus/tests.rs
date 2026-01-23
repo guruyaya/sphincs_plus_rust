@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::lib::{components::wots_plus::secret::{SeedPair, WotsPlus}, helpers::{hasher::HashContext, random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256, byte_array_to_hex}}};
+    use crate::lib::{components::wots_plus::secret::{SeedPair, WotsPlus}, helpers::{hasher::{HashContext, hash_message}, random_generator::{Address, HashData, InnerKeyRole, RandomGeneratorSha256, byte_array_to_hex}}};
     use std::collections::HashSet;
     
     fn gen_private_public_from_seed(address: &Address) -> SeedPair {
@@ -66,26 +66,26 @@ mod tests {
     #[test]
     fn test_signature_on_message() {
         const MESSAGE:&[u8] = "Hello from SPHINCS+ on rust".as_bytes();
-        let other_message = "Bye from SPHINCS+ on rust".as_bytes();
+        const OTHER_MESSAGE:&[u8] = "Bye from SPHINCS+ on rust".as_bytes();
         
-        let address = Address {level: 1, position: 9000};
-        let wots = WotsPlus::new_random(address.clone());
+        let context = HashContext{public_seed: hash_message("This is my public_seed".as_bytes()), address: Address { level: 1, position: 19 }};
+        let wots = WotsPlus::new(hash_message("This is my secret_key".as_bytes()), context);
         let public = wots.generate_public_key();
         
         let signature = wots.sign_message(&MESSAGE);
-        let other_signature = wots.sign_message(&other_message);
+        let other_signature = wots.sign_message(&OTHER_MESSAGE);
         
         let expected_pubkey1 = signature.get_expected_public_from_message(&MESSAGE);
-        let expected_pubkey2 = other_signature.get_expected_public_from_message(&other_message);
+        let expected_pubkey2 = other_signature.get_expected_public_from_message(&OTHER_MESSAGE);
         
         assert_eq!(expected_pubkey2, expected_pubkey1);
 
         assert_eq!(public.public_key, expected_pubkey1);
 
         assert!(public.validate_message(MESSAGE, &signature));
-        assert!(public.validate_message(other_message, &other_signature));
+        assert!(public.validate_message(OTHER_MESSAGE, &other_signature));
         
-        assert!(public.validate_message(other_message, &signature) == false);
+        assert!(public.validate_message(OTHER_MESSAGE, &signature) == false);
     }
 
     // TODO: Test from bytes and to bytes
