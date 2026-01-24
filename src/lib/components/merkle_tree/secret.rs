@@ -1,12 +1,7 @@
 use crate::lib::{
-    components::wots_plus::{secret::WotsPlus, signature::WotsPlusSignature}, helpers::{hasher::{HashContext, hash_array}, random_generator::{Address, HASH_DATA_0, HashData}}
+    components::wots_plus::{secret::WotsPlus}, helpers::{hasher::{HashContext, hash_array}, random_generator::{Address, HASH_DATA_0, HashData}}
 };
-
-pub struct MerkleProof<const HEIGHT:usize> { // STEM_HEIGHT does not include the root level
-    pub public_key: HashData,
-    pub signature: WotsPlusSignature,
-    pub merkle_leaves: [HashData;HEIGHT]
-}
+use super::proof::MerkleProof;
 
 pub(super) fn pair_keys(keys: &Vec<HashData>) -> Vec<HashData> {
     assert!(keys.len() % 2 == 0, "Number of keys provided to pair_keys must be devisible by 2");
@@ -15,23 +10,6 @@ pub(super) fn pair_keys(keys: &Vec<HashData>) -> Vec<HashData> {
     }).collect()
 }
 
-impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
-    fn validate(&self, message: &[u8])-> bool {
-        let this_signature = self.signature.clone();
-        let mut key = this_signature.get_expected_public_from_message(message);
-        let num_keys = (2 as usize).pow(HEIGHT as u32);
-        let key_idx = this_signature.context.address.position as usize / num_keys;
-        
-        for other_key in self.merkle_leaves {
-            if key_idx % 2 == 1{
-                key = hash_array(&[other_key, key])
-            }else{
-                key = hash_array(&[key, other_key])
-            }
-        };
-        return self.public_key == key
-    }
-}
 #[derive(Debug)]
 pub struct MerkleSigner<const HEIGHT:usize> {
     seed: HashData,
@@ -103,8 +81,8 @@ macro_rules! merkle_signer {
 #[cfg(test)]
 mod tests {
     use crate::lib::components::merkle_tree::secret::pair_keys;
+    use crate::lib::helpers::random_generator::Address;
     use crate::lib::helpers::{hasher::HashContext, random_generator::HASH_DATA_0};
-    use crate::lib::{components::merkle_tree::secret::MerkleSigner, helpers::hasher::hash_message};
 
     #[test]
     fn test_create_merkle_signer() {
@@ -210,9 +188,12 @@ mod tests {
     }
     #[test]
     fn test_signature_on_message() {
+        const SEED_CREATOR:&[u8] = "Seed of evil".as_bytes();
         const MESSAGE:&[u8] = "Hello from Rust".as_bytes();
         const OTHER_MESSAGE:&[u8] = "Hello from Rusty".as_bytes();
-        let context = HashContext::default();
+
+        let context = HashContext{ public_seed: hash_message(SEED_CREATOR), address: Address{level: 12, position:123} };
+        
         let signer = merkle_signer!(4, HASH_DATA_0, context);
 
         let signature = signer.sign(MESSAGE);
