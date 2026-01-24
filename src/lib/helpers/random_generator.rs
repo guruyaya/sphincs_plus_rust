@@ -9,7 +9,8 @@ pub fn byte_array_to_hex(data: &[u8]) -> String{
 
 pub enum InnerKeyRole {
     MessageKey,
-    ChecksumKey
+    ChecksumKey,
+    Fors
 }
 
 impl InnerKeyRole {
@@ -21,6 +22,9 @@ impl InnerKeyRole {
             InnerKeyRole::MessageKey => {
                 [2]
             }
+            InnerKeyRole::Fors => {
+                [3]
+            }
         }
     }
 }
@@ -31,6 +35,9 @@ pub struct Address {
 }
 
 impl Address {
+    pub fn default() -> Self{
+        Self{position: 0, level: 0}
+    }
     pub fn to_bytes(&self) -> [u8;10]{
         let mut out = [0u8;10];
         out[..2].copy_from_slice(&self.level.to_le_bytes());
@@ -48,7 +55,7 @@ impl Address {
     }
 }
 
-fn get_key(seed: HashData, address: &Address, role: &InnerKeyRole, role_pos: usize) -> HashData {
+pub fn get_key(seed: HashData, address: &Address, role: &InnerKeyRole, role_pos: usize) -> HashData {
     let mut hasher = Sha256::default();
     Update::update(&mut hasher, &seed);
     Update::update(&mut hasher, &address.to_bytes());
