@@ -3,10 +3,10 @@ use crate::lib::{
 };
 use super::proof::MerkleProof;
 
-pub(super) fn pair_keys(keys: &Vec<HashData>) -> Vec<HashData> {
+pub(crate) fn pair_keys(keys: &Vec<HashData>, public_seed: HashData) -> Vec<HashData> {
     assert!(keys.len() % 2 == 0, "Number of keys provided to pair_keys must be devisible by 2");
     (0..keys.len()).into_iter().step_by(2).map(|idx| {
-        hash_array(&[keys[idx], keys[idx+1]])
+        hash_array(&[keys[idx], keys[idx+1], public_seed])
     }).collect()
 }
 
@@ -55,7 +55,7 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
             };
             merkle_proof[i] = other_key;
             hashed_idx = hashed_idx / 2;
-            public_keys = pair_keys(&public_keys)
+            public_keys = pair_keys(&public_keys, self.context.public_seed)
         };
         (public_keys[0], merkle_proof)
     }
@@ -121,38 +121,56 @@ mod tests {
 
     #[test]
     fn test_pair_keys (){
+        let public_seed = HASH_DATA_0;
         let to_join = vec!(
             hash_message("a".as_bytes()), hash_message("b".as_bytes()), 
             hash_message("a".as_bytes()), hash_message("b".as_bytes()), // Note: the first 2 are the same
             hash_message("a".as_bytes()), hash_message("c".as_bytes()),
             hash_message("a".as_bytes()), hash_message("d".as_bytes()));
-        let keys = pair_keys(&to_join);
+        let keys = pair_keys(&to_join, public_seed);
         assert_eq!(keys.len(), 4);
         assert_eq!(keys[0], keys[1]);
         assert_ne!(keys[0], keys[2]);
         assert_ne!(keys[0], keys[3]);
         assert_ne!(keys[2], keys[3]);
         
-        let more_keys = pair_keys(&keys);
+        let more_keys = pair_keys(&keys, public_seed);
         
         assert_eq!(more_keys.len(), 2);
         assert_ne!(more_keys[0], more_keys[1]);
         
-        let one_key = pair_keys(&more_keys);
+        let one_key = pair_keys(&more_keys, public_seed);
         
         assert_eq!(one_key.len(), 1);
+    }
+    #[test]
+    fn test_paring_seed_effect() {
+        let public_seed1 = HASH_DATA_0;
+        let public_seed2 = HASH_DATA_0;
+        let mut public_seed3 = HASH_DATA_0;
+        public_seed3[0] = 1;
 
+        let to_join = vec!(
+            hash_message("a".as_bytes()), hash_message("b".as_bytes()), 
+        );
+        let result1 = pair_keys(&to_join.clone(), public_seed1);
+        let result2 = pair_keys(&to_join.clone(), public_seed2);
+        let result3 = pair_keys(&to_join.clone(), public_seed3);
+
+        assert_eq!(result1, result2);
+        assert_ne!(result1, result3);
 
     }
     #[test]
     #[should_panic(expected = "Number of keys provided to pair_keys must be devisible by 2")]
     fn test_pair_keys_panics() {
-            let to_join = vec!(
-                hash_message("a".as_bytes()), hash_message("b".as_bytes()), 
-                hash_message("a".as_bytes()), hash_message("b".as_bytes()), // Note: the first 2 are the same
-                hash_message("a".as_bytes()), hash_message("c".as_bytes()),
-                hash_message("a".as_bytes()) );
-            let _ = pair_keys(&to_join);
+        let public_seed = HASH_DATA_0;
+        let to_join = vec!(
+            hash_message("a".as_bytes()), hash_message("b".as_bytes()), 
+            hash_message("a".as_bytes()), hash_message("b".as_bytes()), // Note: the first 2 are the same
+            hash_message("a".as_bytes()), hash_message("c".as_bytes()),
+            hash_message("a".as_bytes()) );
+        let _ = pair_keys(&to_join, public_seed);
     }
     #[test]
     fn test_get_signing_wots() {
