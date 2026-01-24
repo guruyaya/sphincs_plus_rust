@@ -81,6 +81,7 @@ macro_rules! merkle_signer {
 #[cfg(test)]
 mod tests {
     use crate::lib::components::merkle_tree::secret::pair_keys;
+    use crate::lib::helpers::hasher::hash_message;
     use crate::lib::helpers::random_generator::Address;
     use crate::lib::helpers::{hasher::HashContext, random_generator::HASH_DATA_0};
 
