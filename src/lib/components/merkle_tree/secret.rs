@@ -57,7 +57,6 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
             hashed_idx = hashed_idx / 2;
             public_keys = pair_keys(&public_keys)
         };
-        assert_eq!(public_keys.len(), 1, "Something horrible just happened");
         (public_keys[0], merkle_proof)
     }
     pub fn sign(&self, message: &[u8]) -> MerkleProof<HEIGHT> {
