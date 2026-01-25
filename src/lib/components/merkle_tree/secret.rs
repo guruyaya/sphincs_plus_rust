@@ -193,7 +193,7 @@ mod tests {
         let (public_key, merkle_leaves) = signer.get_proof_and_public_key(lowest_layer);
         assert_eq!(merkle_leaves.len(), 4);
         // This checks if the key is stable over tests
-        assert_eq!(public_key, [25, 28, 205, 234, 182, 211, 43, 130, 247, 217, 21, 214, 28, 111, 105, 103, 129, 106, 78, 15, 51, 68, 56, 212, 0, 174, 224, 102, 116, 93, 20, 100] );
+        assert_eq!(public_key, [139, 137, 180, 109, 40, 149, 165, 184, 216, 153, 73, 100, 57, 37, 48, 217, 183, 224, 174, 187, 22, 32, 151, 116, 234, 132, 154, 232, 253, 221, 216, 137] );
         
         let mut other_context = HashContext::default();
         other_context.address.position = 11;

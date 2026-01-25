@@ -1,4 +1,4 @@
-use crate::lib::{components::wots_plus::signature::WotsPlusSignature, helpers::{hasher::hash_array, random_generator::HashData}};
+use crate::lib::{components::wots_plus::signature::{self, WotsPlusSignature}, helpers::{hasher::hash_array, random_generator::HashData}};
 
 pub struct MerkleProof<const HEIGHT:usize> { // STEM_HEIGHT does not include the root level
     pub public_key: HashData,
@@ -16,9 +16,9 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
         
         for other_key in self.merkle_leaves {
             if key_idx % 2 == 1{
-                key = hash_array(&[other_key, key])
+                key = hash_array(&[other_key, key, self.signature.context.public_seed])
             }else{
-                key = hash_array(&[key, other_key])
+                key = hash_array(&[key, other_key, self.signature.context.public_seed])
             }
             key_idx = key_idx / 2
         };
