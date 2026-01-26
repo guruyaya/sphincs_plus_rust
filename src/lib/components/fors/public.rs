@@ -1,4 +1,4 @@
-use crate::lib::helpers::{hasher::HashContext, random_generator::HashData};
+use crate::lib::{components::{fors::indices::message_to_indices}, helpers::{hasher::{HashContext, hash_array, hash_message}, random_generator::HashData}};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ForsSignatureElement<const A: usize> {
@@ -11,8 +11,26 @@ pub struct ForsSignature<const K: usize, const A: usize> {
     pub signatures: [ForsSignatureElement<A>; K],
 }
 impl<const K: usize, const A: usize> ForsSignature<K, A> { 
-    fn validate(self, message: &[u8], context: HashContext, public_key: HashData) -> bool {
-        todo!()
+    pub fn validate(self, message: &[u8], context: HashContext, public_key: HashData) -> bool {
+        let indices = message_to_indices::<K, A>(message);
+        
+        
+        let hashed_collection:[HashData; K] = std::array::from_fn(|i|{
+            let signature = &self.signatures[i];
+            let mut idx = indices[i];
+            let mut hashed_level = hash_message(&signature.secret_key);
+            for j in 0..A {
+                let pair = if idx % 2 == 1{
+                    [signature.auth_path[j], hashed_level, context.public_seed]
+                } else{
+                    [hashed_level, signature.auth_path[j], context.public_seed]
+                };
+                hashed_level = hash_array(&pair);
+                idx /= 2;
+            };
+            hashed_level
+        });
+        hash_array(&hashed_collection) == public_key
     }
 }
 
@@ -29,7 +47,7 @@ mod tests {
 
         // Sign the message using Fors.sign()
         let context = HashContext::default();
-        let fors: Fors<14, 10> = Fors::new(HASH_DATA_0, HashContext { public_seed: HASH_DATA_0, address: Address::default() });
+        let fors: Fors<14, 10> = Fors::new(seed, HashContext { public_seed: HASH_DATA_0, address: Address::default() });
         let public_key = fors.generate_public_key();
         let signature = fors.sign(MESSAGE);
         // Validate the signatue for the right message using ForsSignature.validate()
