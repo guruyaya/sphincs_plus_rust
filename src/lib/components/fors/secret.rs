@@ -104,6 +104,13 @@ mod tests {
     }
     
     #[test]
+    fn test_message_to_indices_real_hash() {
+        let message = hash_message("This is a real world message to sign".as_bytes());
+        let indices = Fors::<10, 14>::message_to_indices(&message);
+        let expected = [7426, 10818, 5414, 14732, 10730, 10731, 11712, 1719, 11223, 6407];
+        assert_eq!(indices, expected);
+    }
+    #[test]
     fn test_message_to_indices_mixed() {
         let message = [0xAAu8; 202];
         // אנחנו מגדירים K=1 ו-A=14 באופן מפורש
