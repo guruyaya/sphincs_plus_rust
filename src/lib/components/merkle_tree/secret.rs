@@ -38,12 +38,17 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
             WotsPlus::new(self.seed.clone(), HashContext { public_seed, address: Address{level, position: pos} })
         }).collect()
     }
+
     pub fn get_signing_wots(&self, lowest_layer: &Vec<WotsPlus>) -> WotsPlus {
         let wots_idx:usize = self.context.address.position as usize % self.num_trees as usize;
         lowest_layer[wots_idx].clone()
     }
 
-    pub(super) fn get_proof_and_public_key(&self, lowest_layer: Vec<WotsPlus>) -> (HashData, [HashData;HEIGHT]){
+    pub fn get_public_key_and_proof(self)  -> (HashData, [HashData;HEIGHT]){
+        let lowest_layer = self.generate_lowest_layer();
+        self._get_public_key_and_proof(lowest_layer)
+    }
+    fn _get_public_key_and_proof(&self, lowest_layer: Vec<WotsPlus>) -> (HashData, [HashData;HEIGHT]){
         let mut public_keys: Vec<HashData> = lowest_layer.iter().map(|wots| wots.generate_public_key().public_key).collect();
         let mut merkle_proof = [HASH_DATA_0;HEIGHT];
         let mut hashed_idx = self.context.address.position as usize % self.num_trees as usize;        
@@ -59,10 +64,11 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
         };
         (public_keys[0], merkle_proof)
     }
+
     pub fn sign(&self, message: &[u8]) -> MerkleProof<HEIGHT> {
         let lowest_layer = self.generate_lowest_layer();
         let signing_wots = self.get_signing_wots(&lowest_layer);
-        let (public_key, merkle_leaves) = self.get_proof_and_public_key(lowest_layer);
+        let (public_key, merkle_leaves) = self._get_public_key_and_proof(lowest_layer);
         let signature = signing_wots.sign_message(message);
 
         MerkleProof { public_key, signature, merkle_leaves }
@@ -189,8 +195,7 @@ mod tests {
         let context = HashContext::default();
         
         let signer = merkle_signer!(4, HASH_DATA_0, context);
-        let lowest_layer = signer.generate_lowest_layer();
-        let (public_key, merkle_leaves) = signer.get_proof_and_public_key(lowest_layer);
+        let (public_key, merkle_leaves) = signer.get_public_key_and_proof();
         assert_eq!(merkle_leaves.len(), 4);
         // This checks if the key is stable over tests
         assert_eq!(public_key, [139, 137, 180, 109, 40, 149, 165, 184, 216, 153, 73, 100, 57, 37, 48, 217, 183, 224, 174, 187, 22, 32, 151, 116, 234, 132, 154, 232, 253, 221, 216, 137] );
@@ -200,7 +205,7 @@ mod tests {
         
         let signer = merkle_signer!(4, HASH_DATA_0, other_context);
         let lowest_layer = signer.generate_lowest_layer();
-        let (other_public_key, merkle_leaves) = signer.get_proof_and_public_key(lowest_layer);
+        let (other_public_key, merkle_leaves) = signer._get_public_key_and_proof(lowest_layer);
         assert_eq!(merkle_leaves.len(), 4);
         assert_eq!(other_public_key, public_key)
     }
