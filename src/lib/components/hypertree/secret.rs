@@ -96,8 +96,5 @@ mod tests {
         assert_ne!(&signature1, &signature2);
         assert_ne!(&signature1, &signature3);
         assert_eq!(pub_key, [224, 31, 1, 91, 252, 215, 6, 57, 53, 202, 213, 81, 97, 177, 126, 123, 144, 199, 0, 252, 76, 99, 252, 236, 244, 59, 129, 140, 77, 193, 28, 177])
-
-
-
     }
 }
