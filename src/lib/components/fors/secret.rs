@@ -21,11 +21,12 @@ impl<const K: usize, const A: usize> Fors<K, A> {
         Self { seed, context, keys_per_tree }
     }
 
-    fn generate_pseoudo_random_keys(&self, position: u64) -> Vec<HashData> {
+    fn generate_pseoudo_random_keys(&self, tree_idx: u64) -> Vec<HashData> {
             let mut keys: Vec<HashData> = vec!();
             
             for j in 0..self.keys_per_tree {
-                let key = get_key(self.seed, &Address{level: 0, position}, &InnerKeyRole::Fors, j);
+                let combined_idx = (tree_idx as usize) * self.keys_per_tree + j;
+                let key = get_key(self.seed, &self.context.address, &InnerKeyRole::Fors, combined_idx);
                 keys.push(key);
             };
             keys

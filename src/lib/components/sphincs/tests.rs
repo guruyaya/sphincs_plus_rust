@@ -70,6 +70,7 @@ fn test_different_seeds_different_signatures() {
     
     // החתימות צריכות להיות שונות
     assert_ne!(signature1, signature2);
+    assert_ne!(signature1.hyper_tree.proofs[0].signature.context.address, signature2.hyper_tree.proofs[0].signature.context.address);
 }
 
 #[test]
@@ -94,4 +95,37 @@ fn test_public_key_generation() {
     assert_eq!(public_key_params.K, K);
     assert_eq!(public_key_params.A, A);
     assert_ne!(public_key.key, [0u8; 32]); // המפתח לא אמור להיות אפס
+}
+
+#[test]
+fn test_timestamp_effect() {
+    const K: usize = 4;
+    const A: usize = 4;
+    const LAYERS: usize = 2;
+    const TREE_HEIGHT: usize = 3;
+
+    let seed = hash_message("my secret seed".as_bytes());
+    let public_seed = hash_message("my public seed".as_bytes());
+    let signer = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed, public_seed);
+
+    let message = b"Same message, different time";
+
+    // חתימה בזמן T
+    let timestamp1 = 1000;
+    let sig1 = signer.sign_with_set_ts(message, timestamp1, None);
+
+    // חתימה בזמן T + 1
+    let timestamp2 = 2000;
+    let sig2 = signer.sign_with_set_ts(message, timestamp2, None);
+
+    // 1. ווידוא שה-timestamp נשמר נכון בחתימה
+    assert_eq!(sig1.timestamp, timestamp1);
+    assert_eq!(sig2.timestamp, timestamp2);
+
+    // 2. ווידוא שהחתימות שונות לגמרי (בגלל שהאינדקס השתנה)
+    // ה-FORS אמור לבחור עלים שונים לגמרי
+    assert_ne!(sig1.fors.signatures, sig2.fors.signatures);
+    
+    // 3. ווידוא שהחתימה הכוללת שונה
+    assert_ne!(sig1, sig2);
 }

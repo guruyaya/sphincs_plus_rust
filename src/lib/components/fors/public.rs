@@ -10,11 +10,8 @@ pub struct ForsSignatureElement<const A: usize> {
 pub struct ForsSignature<const K: usize, const A: usize> {
     pub signatures: [ForsSignatureElement<A>; K],
 }
-impl<const K: usize, const A: usize> ForsSignature<K, A> { 
-    pub fn validate(self, message: &[u8], context: HashContext, public_key: HashData) -> bool {
-        let indices = message_to_indices::<K, A>(message);
-        
-        
+impl<const K: usize, const A: usize> ForsSignature<K, A> {
+    pub fn get_expected_public_from_hash(self, indices: [u32; K], context: HashContext) -> HashData {
         let hashed_collection:[HashData; K] = std::array::from_fn(|i|{
             let signature = &self.signatures[i];
             let mut idx = indices[i];
@@ -30,7 +27,13 @@ impl<const K: usize, const A: usize> ForsSignature<K, A> {
             };
             hashed_level
         });
-        hash_array(&hashed_collection) == public_key
+        hash_array(&hashed_collection)
+    } 
+
+    pub fn validate(self, message: &[u8], context: HashContext, public_key: HashData) -> bool {
+        let indices = message_to_indices::<K, A>(message);
+
+        self.get_expected_public_from_hash(indices, context) == public_key
     }
 }
 
