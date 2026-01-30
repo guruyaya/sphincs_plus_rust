@@ -129,3 +129,40 @@ fn test_timestamp_effect() {
     // 3. ווידוא שהחתימה הכוללת שונה
     assert_ne!(sig1, sig2);
 }
+
+#[test]
+fn test_validate_signature_valid() {
+    const K: usize = 4;
+    const A: usize = 4;
+    const LAYERS: usize = 2;
+    const TREE_HEIGHT: usize = 3;
+
+    let seed = hash_message("my secret seed".as_bytes());
+    let public_seed = hash_message("my public seed".as_bytes());
+    let signer = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed, public_seed);
+
+    let message = b"Verify me!";
+    let signature = signer.sign(message);
+    let public_key = signer.public_key();
+
+    assert!(signature.validate(message, &public_key));
+}
+
+#[test]
+fn test_validate_signature_invalid_message() {
+    const K: usize = 4;
+    const A: usize = 4;
+    const LAYERS: usize = 2;
+    const TREE_HEIGHT: usize = 3;
+
+    let seed = hash_message("my secret seed".as_bytes());
+    let public_seed = hash_message("my public seed".as_bytes());
+    let signer = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed, public_seed);
+
+    let message = b"Verify me!";
+    let wrong_message = b"Don't verify me!";
+    let signature = signer.sign(message);
+    let public_key = signer.public_key();
+
+    assert!(!signature.validate(wrong_message, &public_key));
+}
