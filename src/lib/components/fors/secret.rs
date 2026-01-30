@@ -154,6 +154,13 @@ mod tests {
         assert_ne!(pubk1, pubk3);
         assert_ne!(pubk3, pubk4);
 
+        // בדיקה שהוספנו: שינוי ב-Address בלבד חייב לשנות את המפתח הציבורי
+        let fors5:Fors<4, 8> = Fors::new(hash_message("Hello".as_bytes()), HashContext { public_seed: hash_message("Bye".as_bytes()),
+            address: Address { level: 0, position: 1 }}); // מיקום שונה
+        let pubk5 = fors5.generate_public_key();
+        
+        // לפני התיקון, זה היה נכשל (הם היו שווים)
+        assert_ne!(pubk1, pubk5);
     }
 
     #[test]

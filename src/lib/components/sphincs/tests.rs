@@ -1,6 +1,6 @@
 use crate::lib::{
-    components::sphincs::{secret::SphincsSigner, signature::SphincsSignature, public::SphincsPublic},
-    helpers::{hasher::hash_message, random_generator::HashData}
+    components::sphincs::secret::SphincsSigner,
+    helpers::hasher::hash_message
 };
 
 #[test]
