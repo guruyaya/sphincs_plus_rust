@@ -1,6 +1,4 @@
-use core::fmt;
-
-use crate::lib::{components::{fors::public::ForsSignature, hypertree::public::HyperTreeSignature, sphincs::public::SphincsPublic}, helpers::{hasher::hash_message, random_generator::{HASH_DATA_0, HashData}}};
+use crate::lib::{components::{fors::public::ForsSignature, hypertree::public::HyperTreeSignature, sphincs::public::SphincsPublic}, helpers::{hasher::hash_message, random_generator::{HashData}}};
 
 pub struct SignatureValidResult {
     pub data_hash: HashData,
