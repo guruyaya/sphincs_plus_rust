@@ -50,7 +50,6 @@ mod tests {
         let seed:HashData = hash_message("Secret rust stuff".as_bytes());
 
         // Sign the message using Fors.sign()
-        let context = HashContext::default();
         let fors: Fors<14, 10> = Fors::new(seed, HashContext { public_seed: HASH_DATA_0, address: Address::default() });
         let public_key = fors.generate_public_key();
         let signature = fors.sign(MESSAGE);
