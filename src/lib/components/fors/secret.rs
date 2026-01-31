@@ -6,7 +6,7 @@ use crate::lib::components::fors::indices::message_to_indices;
 use crate::lib::components::fors::public::{ForsSignature, ForsSignatureElement};
 use crate::lib::components::merkle_tree::secret::pair_keys;
 use crate::lib::helpers::hasher::{HashContext, hash_message};
-use crate::lib::helpers::random_generator::{Address, HASH_DATA_0, HashData, InnerKeyRole, get_key};
+use crate::lib::helpers::random_generator::{HASH_DATA_0, HashData, InnerKeyRole, get_key};
 
 pub struct Fors<const K: usize, const A: usize> {
     seed: HashData,
@@ -56,7 +56,7 @@ impl<const K: usize, const A: usize> Fors<K, A> {
 
             ForsSignatureElement{secret_key, auth_path}
         });
-        ForsSignature {signatures}
+        ForsSignature {signatures, context: self.context.clone()}
     }
     pub(super)fn get_auth_path(&self, secret_keys: &Vec<[u8; 32]>, mut leaf_idx: u32) -> [HashData; A] {
         let mut keys: Vec<[u8; 32]> = secret_keys.into_iter().map(|key| hash_message(key)).collect();
@@ -75,7 +75,7 @@ impl<const K: usize, const A: usize> Fors<K, A> {
 #[cfg(test)]
 mod tests {
 
-    use crate::lib::{helpers::{hasher::{hash_array, hash_message}, random_generator::HASH_DATA_0}};
+    use crate::lib::helpers::{hasher::{hash_array, hash_message}, random_generator::{Address, HASH_DATA_0}};
 
     use super::*;
     use super::super::indices::message_to_indices;

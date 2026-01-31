@@ -6,21 +6,22 @@ pub struct ForsSignatureElement<const A: usize> {
     pub auth_path: [HashData; A],
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ForsSignature<const K: usize, const A: usize> {
     pub signatures: [ForsSignatureElement<A>; K],
+    pub context: HashContext
 }
 impl<const K: usize, const A: usize> ForsSignature<K, A> {
-    pub fn get_expected_public_from_hash(self, indices: [u32; K], context: HashContext) -> HashData {
+    pub fn get_expected_public_from_hash(self, indices: [u32; K]) -> HashData {
         let hashed_collection:[HashData; K] = std::array::from_fn(|i|{
             let signature = &self.signatures[i];
             let mut idx = indices[i];
             let mut hashed_level = hash_message(&signature.secret_key);
             for j in 0..A {
                 let pair = if idx % 2 == 1{
-                    [signature.auth_path[j], hashed_level, context.public_seed]
+                    [signature.auth_path[j], hashed_level, self.context.public_seed]
                 } else{
-                    [hashed_level, signature.auth_path[j], context.public_seed]
+                    [hashed_level, signature.auth_path[j], self.context.public_seed]
                 };
                 hashed_level = hash_array(&pair);
                 idx /= 2;
@@ -30,10 +31,10 @@ impl<const K: usize, const A: usize> ForsSignature<K, A> {
         hash_array(&hashed_collection)
     } 
 
-    pub fn validate(self, message: &[u8], context: HashContext, public_key: HashData) -> bool {
+    pub fn validate(self, message: &[u8], public_key: HashData) -> bool {
         let indices = message_to_indices::<K, A>(message);
 
-        self.get_expected_public_from_hash(indices, context) == public_key
+        self.get_expected_public_from_hash(indices) == public_key
     }
 }
 
@@ -54,19 +55,14 @@ mod tests {
         let public_key = fors.generate_public_key();
         let signature = fors.sign(MESSAGE);
         // Validate the signatue for the right message using ForsSignature.validate()
-        assert!(signature.clone().validate(MESSAGE, context.clone(), public_key));
+        assert!(signature.clone().validate(MESSAGE, public_key));
         
         // Validate the signatue fails for the wrong message using ForsSignature.validate()
-        assert!(!signature.clone().validate(OTHER_MESSAGE, context.clone(), public_key));
+        assert!(!signature.clone().validate(OTHER_MESSAGE, public_key));
 
         // Validate the signatue fails for the right message using ForsSignature.validate() with garbeled key 
         let mut garbeled_key = public_key.clone();
         garbeled_key[2] += 1;
-        assert!(!signature.clone().validate(MESSAGE, context.clone(), garbeled_key));
-        
-        // Validate the signatue fails for the right message using ForsSignature.validate() with garbeled public_seed
-        let mut other_context = context.clone();
-        other_context.public_seed[2] += 1;
-        assert!(!signature.clone().validate(MESSAGE, other_context, public_key));
+        assert!(!signature.clone().validate(MESSAGE, garbeled_key));
     }
 }
