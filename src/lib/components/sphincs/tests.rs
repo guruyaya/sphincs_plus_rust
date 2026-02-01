@@ -168,7 +168,7 @@ fn test_validate_signature_invalid_message() {
 }
 
 #[test]
-fn test_validate_tampered_signature() {
+fn test_validate_tampered_signature_ts() {
     const K: usize = 4;
     const A: usize = 4;
     const LAYERS: usize = 2;
@@ -187,6 +187,34 @@ fn test_validate_tampered_signature() {
     
     // שינוי ה-Timestamp אמור לשנות את ה-Index ולכן לפסול את ה-FORS
     tampered_signature.timestamp += 1;
+
+    // האימות צריך להיכשל
+    // הערה: כרגע זה ייכשל (כלומר הטסט ייכשל ויגיד שקיבל true במקום false)
+    // כי המימוש של validate בודק רק hash ולא את החתימה עצמה.
+    // כשתממש את validate במלואו, הטסט הזה יעבור.
+    assert!(tampered_signature.validate(message, &public_key).is_err(), "Signature validtion should fail when timestamp is tampered");
+}
+
+#[test]
+fn test_validate_tampered_signature() {
+    const K: usize = 4;
+    const A: usize = 4;
+    const LAYERS: usize = 2;
+    const TREE_HEIGHT: usize = 3;
+
+    let seed = hash_message("my secret seed".as_bytes());
+    let public_seed = hash_message("my public seed".as_bytes());
+    let signer = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed, public_seed);
+
+    let message = b"Tamper me!";
+    let signature = signer.sign(message);
+    let public_key = signer.public_key();
+
+    // יצירת עותק שניתן לשינוי
+    let mut tampered_signature = signature.clone();
+    
+    // שינוי ה-fors key אמור לשנות את ה-Index ולכן לפסול את ה-FORS
+    tampered_signature.fors.signatures[0].secret_key[0] += 1;
 
     // האימות צריך להיכשל
     // הערה: כרגע זה ייכשל (כלומר הטסט ייכשל ויגיד שקיבל true במקום false)

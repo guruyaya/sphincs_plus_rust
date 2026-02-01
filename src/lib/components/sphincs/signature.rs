@@ -32,8 +32,8 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         let result = self.hyper_tree.clone().validate(fors_key, public_key.key);
         
         match result {
-            true => Err(SigntureError::ValidationError),
-            false => Ok(SignatureValidResult{data_hash, public_key: public_key.key, timestamp: self.timestamp})
+            false => Err(SigntureError::ValidationError),
+            true => Ok(SignatureValidResult{data_hash, public_key: public_key.key, timestamp: self.timestamp})
         }
         
     }
