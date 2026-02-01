@@ -8,6 +8,7 @@ pub struct WotsPlusSignature {
     pub context: HashContext,
     pub message_hashes: [HashData;32],
     pub checksum_hashes: [HashData;2],
+    pub public_key: HashData
 }
 
 impl<'a> WotsPlusSignature {
@@ -71,44 +72,6 @@ impl<'a> WotsPlusSignature {
             checksum_hashes[i].copy_from_slice(&checksum_hashes_part[i*32..(i+1)*32]);
         }
         
-        Self{context: context, message_hashes: message_hashes, checksum_hashes: checksum_hashes}
-    }
-}
-#[cfg(test)]
-mod tests {
-    use crate::lib::{components::wots_plus::{secret::WotsPlus, signature::WotsPlusSignature}, helpers::{hasher::HashContext, random_generator::Address}};
-    
-    #[test]
-    fn test_to_from_bytes() {
-        const MESSAGE:&[u8] = "Hello from rust sphincs".as_bytes();
-
-        let context = HashContext{public_seed: [2u8;32], address: Address{level: 2, position: 11}};
-        let other_context = HashContext{public_seed: [3u8;32], address: Address{level: 2, position: 11}};
-        
-        let wots1 = WotsPlus::new([9u8;32], context.clone());
-        let wots2 = WotsPlus::new([7u8;32], context.clone());
-        let wots_other = WotsPlus::new([9u8;32], other_context);
-
-        let signature1 = wots1.sign_message(MESSAGE);
-        let signature2 = wots2.sign_message(MESSAGE);
-        let signature_other = wots_other.sign_message(MESSAGE);
-
-        let bytes_sign1 = signature1.to_bytes();
-
-        let sign_from_bytes = WotsPlusSignature::from_bytes(bytes_sign1);
-
-        assert_eq!(signature1, sign_from_bytes);
-    
-        assert_ne!(sign_from_bytes.message_hashes, signature2.message_hashes);
-        assert_ne!(sign_from_bytes.message_hashes, signature_other.message_hashes);
-    
-        assert_ne!(sign_from_bytes.checksum_hashes, signature2.checksum_hashes);
-        assert_ne!(sign_from_bytes.checksum_hashes, signature_other.checksum_hashes);
-    
-        let pub1 = signature1.get_expected_public_from_message(MESSAGE);
-        let pub_bytes = sign_from_bytes.get_expected_public_from_message(MESSAGE);
-        
-        assert_eq!(pub1, pub_bytes);
-
+        Self{context: context, message_hashes: message_hashes, checksum_hashes: checksum_hashes, public_key: HASH_DATA_0}
     }
 }

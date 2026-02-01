@@ -78,7 +78,8 @@ impl WotsPlus {
             let key = self.secret_keys.checksum[index];
             checksum_hashes[index] = repeat_hash(key, times_to_repeat.clone(), &self.context);
         };
-        return WotsPlusSignature {checksum_hashes: checksum_hashes, context: self.context.clone(), message_hashes: message_hashes}
+        let public_key = self.generate_public_key().public_key;
+        return WotsPlusSignature {checksum_hashes: checksum_hashes, context: self.context.clone(), message_hashes: message_hashes, public_key: public_key}
     }
     
     pub fn sign_message(&self, message: &[u8]) -> WotsPlusSignature {
