@@ -140,7 +140,7 @@ fn test_validate_signature_valid() {
     let seed = hash_message("my secret seed".as_bytes());
     let public_seed = hash_message("my public seed".as_bytes());
     let signer = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed, public_seed);
-
+    dbg!("1. {}", signer.public_key());
     let message = b"Verify me!";
     let signature = signer.sign(message);
     let public_key = signer.public_key();

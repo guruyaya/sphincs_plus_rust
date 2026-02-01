@@ -7,7 +7,7 @@ pub struct KeyParams {
     pub LAYERS: usize,
     pub TREE_HEIGHT: usize
 }
-
+#[derive(Debug)]
 pub struct SphincsPublic<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usize> {
     pub key: HashData,
     pub public_seed: HashData,

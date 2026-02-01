@@ -53,18 +53,18 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
 
     pub(super) fn sign_with_set_ts(&self, message: &[u8], timestamp: u128, force_index: Option<u64>) -> SphincsSignature<K, A, LAYERS, TREE_HEIGHT> {
         let hashed_ts = hash_message(&timestamp.to_be_bytes());
-        let hash_message = hash_message(message);
-        let hash_and_ts = hash_array(&[hash_message, hashed_ts]);
+        let message_hash = hash_message(message);
+        let hash_and_ts = hash_array(&[message_hash, hashed_ts]);
         
         let index = match force_index {
             None => hash_to_u64(hash_and_ts),
             Some(idx) => idx
         };
         
-        let (fors, fors_public_key) = self.sign_position(hash_message, index);
+        let (fors, fors_public_key) = self.sign_position(hash_and_ts, index);
         let hp_signer = HyperTreeSigner::<LAYERS, TREE_HEIGHT>::new(self.seed, self.public_seed);
         let hp_signature = hp_signer.sign(fors_public_key, index);
-        SphincsSignature::<K, A, LAYERS, TREE_HEIGHT>{data_hash: hash_message, fors, hyper_tree: hp_signature, timestamp: timestamp}
+        SphincsSignature::<K, A, LAYERS, TREE_HEIGHT>{data_hash: message_hash, fors, hyper_tree: hp_signature, timestamp: timestamp}
     }
 
     pub fn sign(&self, message: &[u8]) -> SphincsSignature<K, A, LAYERS, TREE_HEIGHT> {
