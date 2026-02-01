@@ -1,4 +1,4 @@
-use crate::lib::{components::{fors::public::ForsSignature, hypertree::public::HyperTreeSignature, sphincs::public::SphincsPublic}, helpers::{hasher::hash_message, random_generator::{HashData}}};
+use crate::lib::{components::{fors::{indices::message_to_indices, public::ForsSignature}, hypertree::public::HyperTreeSignature, sphincs::public::SphincsPublic}, helpers::{hasher::hash_message, random_generator::HashData}};
 
 pub struct SignatureValidResult {
     pub data_hash: HashData,
@@ -26,6 +26,15 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         if data_hash != self.data_hash {
             return Err(SigntureError::WrongMessage(self.data_hash));
         }
-        return Ok(SignatureValidResult{data_hash, public_key: public_key.key, timestamp: self.timestamp})
+        let indices = message_to_indices::<K, A>(message);
+
+        let fors_key = self.fors.clone().get_expected_public_from_hash(indices);
+        let result = self.hyper_tree.clone().validate(fors_key, public_key.key);
+        
+        match result {
+            true => Err(SigntureError::ValidationError),
+            false => Ok(SignatureValidResult{data_hash, public_key: public_key.key, timestamp: self.timestamp})
+        }
+        
     }
 }

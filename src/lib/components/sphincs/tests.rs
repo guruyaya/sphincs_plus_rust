@@ -164,7 +164,7 @@ fn test_validate_signature_invalid_message() {
     let signature = signer.sign(message);
     let public_key = signer.public_key();
 
-    assert!(!signature.validate(wrong_message, &public_key).is_err());
+    assert!(signature.validate(wrong_message, &public_key).is_err());
 }
 
 #[test]
