@@ -9,7 +9,8 @@ pub struct ForsSignatureElement<const A: usize> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ForsSignature<const K: usize, const A: usize> {
     pub signatures: [ForsSignatureElement<A>; K],
-    pub context: HashContext
+    pub context: HashContext,
+    pub public_key: HashData
 }
 impl<const K: usize, const A: usize> ForsSignature<K, A> {
     pub fn get_expected_public_from_hash(self, indices: [u32; K]) -> HashData {

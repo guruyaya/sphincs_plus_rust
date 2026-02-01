@@ -10,6 +10,7 @@ pub struct SignatureValidResult {
 pub enum SigntureError {
     WrongMessage(HashData),
     ValidationError,
+    ForsFailure(HashData, HashData)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -34,12 +35,16 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         let indices = message_to_indices::<K, A>(&hash_and_ts);
         
         let fors_key = self.fors.clone().get_expected_public_from_hash(indices);
-        dbg!("2. {}", fors_key);
-        let result = self.hyper_tree.clone().validate(fors_key, public_key.key);
+        if  fors_key != self.fors.public_key {
+            return Err(SigntureError::ForsFailure(fors_key, self.fors.public_key));
+        }
+        let hyper_tree_result = self.hyper_tree.clone().validate(fors_key, public_key.key);
         
-        match result {
+        match hyper_tree_result {
             false => Err(SigntureError::ValidationError),
-            true => Ok(SignatureValidResult{data_hash: message_hash, public_key: public_key.key, timestamp: self.timestamp})
+            true => {
+                Ok(SignatureValidResult{data_hash: message_hash, public_key: public_key.key, timestamp: self.timestamp})
+            }
         }
         
     }
