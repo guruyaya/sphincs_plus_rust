@@ -11,7 +11,7 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
     pub fn get_height(self) -> usize {
         HEIGHT
     }
-    pub fn validate(&self, message: &[u8])-> bool {
+    pub fn validate(self, message: &[u8], public_key: HashData)-> bool {
         let this_signature = self.signature.clone();
         let num_keys = (2 as usize).pow(HEIGHT as u32);
         
@@ -26,6 +26,10 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
             }
             key_idx = key_idx / 2
         };
-        self.public_key == key
+        public_key == key
+    }
+    pub fn validate_self(self, message: &[u8])-> bool {
+        let pkey = &self.public_key.clone();
+        self.validate(&message, *pkey)
     }
 }

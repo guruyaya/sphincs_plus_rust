@@ -9,7 +9,7 @@ impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSignature<LAYERS, T
     pub fn get_expected_public_key(self, fors_public_key: HashData) -> Option<HashData> {
         let mut testing_key = fors_public_key;
         for i in 0..LAYERS {
-            if !self.proofs[i].validate(&testing_key) {
+            if !self.proofs[i].clone().validate_self(&testing_key) {
                 return None;
             }
             testing_key = self.proofs[i].public_key;

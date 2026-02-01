@@ -3,6 +3,9 @@ use crate::lib::helpers::{hasher::{HashContext, complement_hash, hash_array}, ra
 
 pub const MAX_HASHES_NEEDED:u16 = 255 * 32;
 
+pub struct ValidWotsPSignature (HashData, HashContext); // public key, context
+pub struct InvalidWotsPSignature (HashData, HashData, HashContext); // calculated public key, public key, context
+
 #[derive(Debug,Clone, PartialEq)]
 pub struct WotsPlusSignature {
     pub context: HashContext,
@@ -12,7 +15,7 @@ pub struct WotsPlusSignature {
 }
 
 impl<'a> WotsPlusSignature {
-    pub fn get_expected_public_from_hash(self, message_hash: &HashData) -> HashData {
+    pub fn get_expected_public_from_hash(self, message_hash: HashData) -> HashData {
         let mut count_hashes_left: u16 = MAX_HASHES_NEEDED;
         let mut out = [HASH_DATA_0;34];
 
@@ -35,43 +38,15 @@ impl<'a> WotsPlusSignature {
     pub fn get_expected_public_from_message(&self, message:&[u8]) -> HashData {
         let mut message_hash = Sha256::default();
         Update::update(&mut message_hash, message);
-        self.clone().get_expected_public_from_hash(&message_hash.finalize().into())
+        self.clone().get_expected_public_from_hash(message_hash.finalize().into())
+    }
+
+    pub fn validate_self(self, message_hash: HashData) -> Result<ValidWotsPSignature, InvalidWotsPSignature> {
+        let calculated_key = self.clone().get_expected_public_from_hash(message_hash);
+        match self.public_key == calculated_key {
+            true => Ok(ValidWotsPSignature(self.public_key, self.context.clone())),
+            false => Err(InvalidWotsPSignature(calculated_key, self.public_key, self.context.clone()))
+        }
     }
     
-    pub fn to_bytes(&self) -> [u8; 1130] {
-        let mut out = [08;1130];
-        out[..42].copy_from_slice(&self.context.to_bytes());
-
-        let mut offset = 42;
-        for hash in self.message_hashes {
-            out[offset..offset+32].copy_from_slice(&hash);
-            offset += 32;
-        };
-        
-        for hash in self.checksum_hashes {
-            out[offset..offset+32].copy_from_slice(&hash);
-            offset += 32;
-        };
-
-        out
-    }
-    
-    pub fn from_bytes(bytes: [u8; 1130]) -> Self{
-        let context_bytes:[u8;42] = bytes[..42].try_into().expect("Wrong size / datatype passed");
-        let context = HashContext::from_bytes(context_bytes);
-
-        let mut message_hashes:[HashData;32] = [HASH_DATA_0;32];
-        let message_hashes_part = &bytes[42..1066];
-        for i in 0..32{
-            message_hashes[i].copy_from_slice(&message_hashes_part[i*32..(i+1)*32]);
-        }
-        
-        let mut checksum_hashes:[HashData;2] = [HASH_DATA_0;2];
-        let checksum_hashes_part = &bytes[1066..];
-        for i in 0..2{
-            checksum_hashes[i].copy_from_slice(&checksum_hashes_part[i*32..(i+1)*32]);
-        }
-        
-        Self{context: context, message_hashes: message_hashes, checksum_hashes: checksum_hashes, public_key: HASH_DATA_0}
-    }
 }

@@ -220,7 +220,7 @@ mod tests {
         let signer = merkle_signer!(4, HASH_DATA_0, context);
 
         let signature = signer.sign(MESSAGE);
-        assert!(signature.validate(MESSAGE));   
-        assert!(!signature.validate(OTHER_MESSAGE));       
+        assert!(signature.clone().validate_self(MESSAGE));   
+        assert!(!signature.validate_self(OTHER_MESSAGE));       
     }
 }
