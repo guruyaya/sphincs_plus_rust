@@ -6,15 +6,22 @@ pub struct HyperTreeSignature<const LAYERS: usize, const TREE_HEIGHT: usize> {
 }
 
 impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSignature<LAYERS, TREE_HEIGHT> {
-    pub fn validate(self, fors_public_key: HashData, public_key: HashData) -> bool {
+    pub fn get_expected_public_key(self, fors_public_key: HashData) -> Option<HashData> {
         let mut testing_key = fors_public_key;
         for i in 0..LAYERS {
             if !self.proofs[i].validate(&testing_key) {
-                return false;
+                return None;
             }
             testing_key = self.proofs[i].public_key;
         };
-        public_key == testing_key
+        Some(testing_key)
+    }
+    pub fn validate(self, fors_public_key: HashData, public_key: HashData) -> bool {
+        let result = self.get_expected_public_key(fors_public_key);
+        match result {
+            None => false,
+            Some(testing_key) => public_key == testing_key
+        }
     }
 }
 
