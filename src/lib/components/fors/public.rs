@@ -37,6 +37,14 @@ impl<const K: usize, const A: usize> ForsSignature<K, A> {
 
         self.get_expected_public_from_hash(indices) == public_key
     }
+
+    
+    pub fn validate_self(self, message: &[u8]) -> bool {
+        let public_key = self.public_key.clone();
+        self.validate(message, public_key)
+    }
+
+
 }
 
 #[cfg(test)]
