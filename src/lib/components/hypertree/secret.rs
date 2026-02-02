@@ -27,7 +27,7 @@ impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSigner<LAYERS, TREE
         let mut current_message = fors_public_key;
         
         let proofs = core::array::from_fn(|i| {
-            let pos = self.clone().get_tree_pos(index as u128, i);
+            let pos = self.clone().get_tree_pos(index, i);
             let context = HashContext { 
                 public_seed: self.public_seed, 
                 address: Address { level: i as u16, position: pos } 

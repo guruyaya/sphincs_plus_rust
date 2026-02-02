@@ -44,7 +44,7 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         }
     }
     pub fn sign_position(&self, data_hash: HashData, position: u128) -> (ForsSignature<K, A>, HashData){
-        let context = HashContext{public_seed: self.public_seed, address: Address{level: 0, position: position as u128}};
+        let context = HashContext{public_seed: self.public_seed, address: Address{level: 0, position: position}};
 
         let fors = Fors::<K, A>::new(self.seed, context);
         

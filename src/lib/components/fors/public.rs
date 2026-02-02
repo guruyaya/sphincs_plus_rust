@@ -40,7 +40,7 @@ impl<const K: usize, const A: usize> ForsSignature<K, A> {
 
     
     pub fn validate_self(self, message: &[u8]) -> bool {
-        let public_key = self.public_key.clone();
+        let public_key = self.public_key;
         self.validate(message, public_key)
     }
 
