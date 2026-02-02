@@ -1,4 +1,4 @@
-use crate::lib::{components::{fors::public, wots_plus::signature::WotsPlusSignature}, helpers::{hasher::hash_array, random_generator::HashData}};
+use crate::lib::{components::{wots_plus::signature::WotsPlusSignature}, helpers::{hasher::hash_array, random_generator::HashData}};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MerkleProof<const HEIGHT:usize> { // STEM_HEIGHT does not include the root level
