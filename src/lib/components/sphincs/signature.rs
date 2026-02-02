@@ -1,4 +1,4 @@
-use crate::lib::{components::{fors::{indices::message_to_indices, public::{self, ForsSignature}}, hypertree::public::{FailedValidation, HyperTreeSignature}, sphincs::public::SphincsPublic}, helpers::{hasher::{hash_array, hash_message}, random_generator::HashData}};
+use crate::lib::{components::{fors::{indices::message_to_indices, public::{ForsSignature}}, hypertree::public::{FailedValidation, HyperTreeSignature}, sphincs::public::SphincsPublic}, helpers::{hasher::{hash_array, hash_message}, random_generator::HashData}};
 
 #[derive(Debug)]
 pub struct SignatureValidResult {

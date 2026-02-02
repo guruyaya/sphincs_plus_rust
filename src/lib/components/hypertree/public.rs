@@ -34,9 +34,22 @@ impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSignature<LAYERS, T
 #[cfg(test)]
 mod tests {
     use crate::lib::{components::hypertree::secret::HyperTreeSigner, helpers::hasher::hash_message};
+    
+    #[test]
+    fn test_validation_success() {
+        let seed = hash_message("The secret_of_nim".as_bytes());
+        let public_seed = hash_message("Never gonna tell you".as_bytes());
+        let fors_public_key = hash_message("Drink my juice".as_bytes());
+
+        let htree = HyperTreeSigner::<15, 4>::new(seed, public_seed);
+        let public_key = htree.generate_master_public_key();
+
+        let signature1 = htree.clone().sign(fors_public_key, 30);
+        assert!(signature1.clone().validate(fors_public_key, public_key).is_ok());
+    }
 
     #[test]
-    fn test_validation() {
+    fn test_validation_failures() {
         let seed = hash_message("The secret_of_nim".as_bytes());
         let public_seed = hash_message("Never gonna tell you".as_bytes());
         let fors_public_key = hash_message("Drink my juice".as_bytes());
@@ -50,7 +63,6 @@ mod tests {
 
         let signature1 = htree.clone().sign(fors_public_key, 10);
 
-        assert!(signature1.clone().validate(fors_public_key, public_key).is_ok());
         assert!(signature1.clone().validate(fors_public_key, bad_public_key).is_err());
         assert!(signature1.clone().validate(fake_fors_public_key, public_key).is_err());
 

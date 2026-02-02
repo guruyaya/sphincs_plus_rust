@@ -55,10 +55,12 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         let hashed_ts = hash_message(&timestamp.to_be_bytes());
         let message_hash = hash_message(message);
         let hash_and_ts = hash_array(&[message_hash, hashed_ts]);
+        let max_index = (2_u64).pow(LAYERS as u32 * TREE_HEIGHT as u32);
+
         
         let index = match force_index {
-            None => hash_to_u64(hash_and_ts),
-            Some(idx) => idx
+            None => hash_to_u64(hash_and_ts) % max_index,
+            Some(idx) => idx % max_index
         };
         
         let (fors, fors_public_key) = self.sign_position(hash_and_ts, index);
@@ -69,6 +71,7 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
 
     pub fn sign(&self, message: &[u8]) -> SphincsSignature<K, A, LAYERS, TREE_HEIGHT> {
         let timestamp = get_ms_timestamp_milliseconds();
+        // self.sign_with_set_ts(message, timestamp, None)
         self.sign_with_set_ts(message, timestamp, None)
     }
 }

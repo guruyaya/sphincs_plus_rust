@@ -1,5 +1,5 @@
 use crate::lib::{
-    components::sphincs::secret::SphincsSigner,
+    components::sphincs::secret::{SphincsSigner},
     helpers::hasher::hash_message
 };
 
@@ -142,6 +142,24 @@ fn test_validate_signature_valid() {
     let signer = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed, public_seed);
     let message = b"Verify me!";
     let signature = signer.sign(message);
+    let public_key = signer.public_key();
+    let validation = signature.validate(message, &public_key);
+    assert!(validation.is_ok(), "Returned with error {:?}", validation);
+}
+
+#[test]
+fn test_validate_signature_valid_index_64() {
+    const K: usize = 4;
+    const A: usize = 4;
+    const LAYERS: usize = 2;
+    const TREE_HEIGHT: usize = 3;
+
+    let seed = hash_message("my secret seed".as_bytes());
+    let public_seed = hash_message("my public seed".as_bytes());
+    let signer = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed, public_seed);
+    let message = b"Verify me!";
+    let timestamp = 1770016416457;
+    let signature = signer.sign_with_set_ts(message, timestamp, Some(64));
     let public_key = signer.public_key();
     let validation = signature.validate(message, &public_key);
     assert!(validation.is_ok(), "Returned with error {:?}", validation);
