@@ -58,8 +58,8 @@ impl<const K: usize, const A: usize> Fors<K, A> {
         });
         ForsSignature {signatures, context: self.context.clone(), public_key: self.generate_public_key()}
     }
-    pub(super)fn get_auth_path(&self, secret_keys: &Vec<[u8; 32]>, mut leaf_idx: u32) -> [HashData; A] {
-        let mut keys: Vec<[u8; 32]> = secret_keys.iter().map(|key| hash_message(key)).collect();
+    pub(super)fn get_auth_path(&self, secret_keys: &[HashData], mut leaf_idx: u32) -> [HashData; A] {
+        let mut keys: Vec<HashData> = secret_keys.iter().map(|key| hash_message(key)).collect();
         
         core::array::from_fn(|_| {
             let neighbor_idx = leaf_idx ^ 1;

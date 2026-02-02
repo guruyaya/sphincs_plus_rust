@@ -28,8 +28,8 @@ impl WotsPlus {
 
     fn generate_secret_keys(seed: HashData, address: &Address) -> SecretKeysPair{
         let mut rndgen = RandomGeneratorSha256::new(seed);
-        let message_keys = rndgen.get_keys::<32>(&address, InnerKeyRole::MessageKey);
-        let checksum_keys = rndgen.get_keys::<2>(&address, InnerKeyRole::ChecksumKey);
+        let message_keys = rndgen.get_keys::<32>(address, InnerKeyRole::MessageKey);
+        let checksum_keys = rndgen.get_keys::<2>(address, InnerKeyRole::ChecksumKey);
         
         SecretKeysPair {
             message: message_keys,
@@ -70,16 +70,16 @@ impl WotsPlus {
         for (index, times_to_repeat) in _hash.into_iter().enumerate() {
             let key = self.secret_keys.message[index];
             message_hashes[index] = repeat_hash(key, times_to_repeat, &self.context);
-            count_hashes_left = count_hashes_left - times_to_repeat as u16; 
+            count_hashes_left -= times_to_repeat as u16; 
         };
         
         let two_bytes = count_hashes_left.to_le_bytes();
         for (index, times_to_repeat) in two_bytes.into_iter().enumerate() {
             let key = self.secret_keys.checksum[index];
-            checksum_hashes[index] = repeat_hash(key, times_to_repeat.clone(), &self.context);
+            checksum_hashes[index] = repeat_hash(key, times_to_repeat, &self.context);
         };
         let public_key = self.generate_public_key().public_key;
-        return WotsPlusSignature {checksum_hashes, context: self.context.clone(), message_hashes, public_key}
+        WotsPlusSignature {checksum_hashes, context: self.context.clone(), message_hashes, public_key}
     }
     
     pub fn sign_message(&self, message: &[u8]) -> WotsPlusSignature {

@@ -28,16 +28,13 @@ impl InnerKeyRole {
         }
     }
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct Address {
     pub level: u16,
     pub position: u128
 }
 
 impl Address {
-    pub fn default() -> Self{
-        Self{position: 0, level: 0}
-    }
     pub fn to_bytes(&self) -> [u8;18]{
         let mut out = [0u8;18];
         out[..2].copy_from_slice(&self.level.to_le_bytes());
@@ -54,7 +51,6 @@ impl Address {
         Self{level, position}
     }
 }
-
 pub fn get_key(seed: HashData, address: &Address, role: &InnerKeyRole, role_pos: usize) -> HashData {
     let mut hasher = Sha256::default();
     Update::update(&mut hasher, &seed);
@@ -82,11 +78,7 @@ impl RandomGeneratorSha256 {
     }
 
     pub fn get_keys<const NUM_KEYS: usize>(&mut self, address: &Address, role: InnerKeyRole) -> [HashData;NUM_KEYS] {
-        let mut out = [HASH_DATA_0;NUM_KEYS];
-        for i in 0..NUM_KEYS {
-            out[i] = get_key(self.seed, address, &role, i)
-        };
-        out
+        core::array::from_fn(|i| get_key(self.seed, address, &role, i))
     }
 }
 

@@ -1,11 +1,11 @@
 use crate::lib::{
-    components::wots_plus::{secret::WotsPlus}, helpers::{hasher::{HashContext, hash_array}, random_generator::{Address, HASH_DATA_0, HashData}}
+    components::wots_plus::{secret::WotsPlus}, helpers::{hasher::{HashContext, hash_array}, random_generator::{Address, HashData}}
 };
 use super::proof::MerkleProof;
 
-pub(crate) fn pair_keys(keys: &Vec<HashData>, public_seed: HashData) -> Vec<HashData> {
-    assert!(keys.len() % 2 == 0, "Number of keys provided to pair_keys must be devisible by 2");
-    (0..keys.len()).into_iter().step_by(2).map(|idx| {
+pub(crate) fn pair_keys(keys: &[HashData], public_seed: HashData) -> Vec<HashData> {
+    assert!(keys.len().is_multiple_of(2), "Number of keys provided to pair_keys must be devisible by 2");
+    (0..keys.len()).step_by(2).map(|idx| {
         hash_array(&[keys[idx], keys[idx+1], public_seed])
     }).collect()
 }
@@ -20,7 +20,7 @@ pub struct MerkleSigner<const HEIGHT:usize> {
 
 impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
     pub fn new(seed: HashData, context:HashContext) -> Self {
-        let num_trees: u64 = (2 as u64).pow((HEIGHT) as u32);
+        let num_trees: u64 = (2_u64).pow((HEIGHT) as u32);
         Self{seed, context, num_trees}
     }
     pub fn get_height(&self) -> usize{
@@ -32,14 +32,14 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
         let position = self.context.address.position;
         let level = self.context.address.level;
         let public_seed = self.context.public_seed;
-        let first_postion = (position / &(self.num_trees as u128)) * &(self.num_trees as u128);
+        let first_postion = (position / (self.num_trees as u128)) * (self.num_trees as u128);
         let next_tree_position = first_postion + self.num_trees as u128;
         (first_postion..next_tree_position).map(|pos| {
-            WotsPlus::new(self.seed.clone(), HashContext { public_seed, address: Address{level, position: pos} })
+            WotsPlus::new(self.seed, HashContext { public_seed, address: Address{level, position: pos} })
         }).collect()
     }
 
-    pub fn get_signing_wots(&self, lowest_layer: &Vec<WotsPlus>) -> WotsPlus {
+    pub fn get_signing_wots(&self, lowest_layer: &[WotsPlus]) -> WotsPlus {
         let wots_idx:usize = self.context.address.position as usize % self.num_trees as usize;
         lowest_layer[wots_idx].clone()
     }
@@ -50,9 +50,8 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
     }
     fn _get_public_key_and_proof(&self, lowest_layer: Vec<WotsPlus>) -> (HashData, [HashData;HEIGHT]){
         let mut public_keys: Vec<HashData> = lowest_layer.iter().map(|wots| wots.generate_public_key().public_key).collect();
-        let mut merkle_proof = [HASH_DATA_0;HEIGHT];
         let mut hashed_idx = self.context.address.position as usize % self.num_trees as usize;
-        let merkle_proof  = core::array::from_fn(|i| {
+        let merkle_proof  = core::array::from_fn(|_| {
             let other_key = if hashed_idx % 2 == 1 {
                 public_keys[hashed_idx - 1]
             } else {

@@ -9,9 +9,6 @@ pub struct HashContext {
 }
 
 impl HashContext{
-    pub fn default() -> Self {
-        Self{public_seed: HASH_DATA_0, address: Address{level: 0, position: 0}}
-    }
     pub fn to_bytes(&self) -> [u8;50] {
         let mut out = [0u8;50];
         out[..32].copy_from_slice(&self.public_seed);
@@ -27,9 +24,13 @@ impl HashContext{
     }
 }
 
+impl Default for HashContext {
+    fn default() -> Self {
+        Self{public_seed: HASH_DATA_0, address: Address{level: 0, position: 0}}
+    }
+}
 pub fn repeat_hash(to_hash: HashData, times_to_repeat: u8, context: &HashContext) -> [u8;32] {
-    let hash_step = to_hash.clone();
-    (0..times_to_repeat).fold(hash_step, |acc, _| {
+    (0..times_to_repeat).fold(to_hash, |acc, _| {
         let mut hashed = Sha256::default();
         
         Update::update(&mut hashed, &acc);
@@ -40,7 +41,7 @@ pub fn repeat_hash(to_hash: HashData, times_to_repeat: u8, context: &HashContext
 }
 
 pub fn complement_hash(to_hash: HashData, times_repeated: u8, context: &HashContext) -> [u8;32] {
-    return repeat_hash(to_hash, 255-times_repeated, &context)
+    repeat_hash(to_hash, 255-times_repeated, context)
 }
 
 pub fn hash_array(hashes: &[HashData]) -> HashData{
