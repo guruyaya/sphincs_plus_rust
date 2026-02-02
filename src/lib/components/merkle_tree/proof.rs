@@ -13,7 +13,7 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
     }
     pub fn get_expected_public_key(self, message: &[u8]) -> HashData{
         let this_signature = self.signature.clone();
-        let num_keys = (2 as usize).pow(HEIGHT as u32);
+        let num_keys = (2_usize).pow(HEIGHT as u32);
         
         let mut key = this_signature.get_expected_public_from_message(message);
         let mut key_idx = this_signature.context.address.position as usize % num_keys;
@@ -24,7 +24,7 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
             }else{
                 key = hash_array(&[key, other_key, self.signature.context.public_seed])
             }
-            key_idx = key_idx / 2
+            key_idx /= 2
         };
         key
     }
@@ -34,6 +34,6 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
     }
     pub fn validate_self(self, message: &[u8])-> bool {
         let pkey = &self.public_key.clone();
-        self.validate(&message, *pkey)
+        self.validate(message, *pkey)
     }
 }

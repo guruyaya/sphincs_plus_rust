@@ -51,17 +51,17 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
     fn _get_public_key_and_proof(&self, lowest_layer: Vec<WotsPlus>) -> (HashData, [HashData;HEIGHT]){
         let mut public_keys: Vec<HashData> = lowest_layer.iter().map(|wots| wots.generate_public_key().public_key).collect();
         let mut merkle_proof = [HASH_DATA_0;HEIGHT];
-        let mut hashed_idx = self.context.address.position as usize % self.num_trees as usize;        
-        for i in 0..HEIGHT {
+        let mut hashed_idx = self.context.address.position as usize % self.num_trees as usize;
+        let merkle_proof  = core::array::from_fn(|i| {
             let other_key = if hashed_idx % 2 == 1 {
                 public_keys[hashed_idx - 1]
             } else {
                 public_keys[hashed_idx + 1]
             };
-            merkle_proof[i] = other_key;
-            hashed_idx = hashed_idx / 2;
-            public_keys = pair_keys(&public_keys, self.context.public_seed)
-        };
+            hashed_idx /= 2;
+            public_keys = pair_keys(&public_keys, self.context.public_seed);
+            other_key
+        });
         (public_keys[0], merkle_proof)
     }
 

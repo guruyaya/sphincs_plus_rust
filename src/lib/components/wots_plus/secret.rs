@@ -39,7 +39,7 @@ impl WotsPlus {
     }
 
     pub fn new(seed: HashData, context: HashContext) -> Self {
-        Self {seed: seed, secret_keys: Self::generate_secret_keys(seed, &context.address), context: context}
+        Self {seed, secret_keys: Self::generate_secret_keys(seed, &context.address), context}
     }
 
     pub fn new_random(address: Address) -> Self {
@@ -59,7 +59,7 @@ impl WotsPlus {
         };
 
         let public_key = hash_array(&public_keyset);
-        WotsPlusPublic { public_key: public_key, context: self.context.clone()}
+        WotsPlusPublic { public_key, context: self.context.clone()}
     }
     
     pub fn sign_hash(&self, _hash: HashData) -> WotsPlusSignature {
@@ -79,7 +79,7 @@ impl WotsPlus {
             checksum_hashes[index] = repeat_hash(key, times_to_repeat.clone(), &self.context);
         };
         let public_key = self.generate_public_key().public_key;
-        return WotsPlusSignature {checksum_hashes: checksum_hashes, context: self.context.clone(), message_hashes: message_hashes, public_key: public_key}
+        return WotsPlusSignature {checksum_hashes, context: self.context.clone(), message_hashes, public_key}
     }
     
     pub fn sign_message(&self, message: &[u8]) -> WotsPlusSignature {

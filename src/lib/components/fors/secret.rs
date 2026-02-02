@@ -6,7 +6,7 @@ use crate::lib::components::fors::indices::message_to_indices;
 use crate::lib::components::fors::public::{ForsSignature, ForsSignatureElement};
 use crate::lib::components::merkle_tree::secret::pair_keys;
 use crate::lib::helpers::hasher::{HashContext, hash_message};
-use crate::lib::helpers::random_generator::{HASH_DATA_0, HashData, InnerKeyRole, get_key};
+use crate::lib::helpers::random_generator::{HashData, InnerKeyRole, get_key};
 
 pub struct Fors<const K: usize, const A: usize> {
     seed: HashData,
@@ -17,7 +17,7 @@ pub struct Fors<const K: usize, const A: usize> {
 impl<const K: usize, const A: usize> Fors<K, A> {
     // A means the HEIGHT of the tree, as suggested in FIPS 205
     pub fn new(seed: HashData, context: HashContext) -> Self {
-        let keys_per_tree = (2 as usize).pow(A as u32);
+        let keys_per_tree = (2_usize).pow(A as u32);
         Self { seed, context, keys_per_tree }
     }
 
@@ -59,16 +59,15 @@ impl<const K: usize, const A: usize> Fors<K, A> {
         ForsSignature {signatures, context: self.context.clone(), public_key: self.generate_public_key()}
     }
     pub(super)fn get_auth_path(&self, secret_keys: &Vec<[u8; 32]>, mut leaf_idx: u32) -> [HashData; A] {
-        let mut keys: Vec<[u8; 32]> = secret_keys.into_iter().map(|key| hash_message(key)).collect();
+        let mut keys: Vec<[u8; 32]> = secret_keys.iter().map(|key| hash_message(key)).collect();
         
-        let mut auth_path = [HASH_DATA_0; A];
-        for level in 0..A{
+        core::array::from_fn(|_| {
             let neighbor_idx = leaf_idx ^ 1;
-            auth_path[level] = keys[neighbor_idx as usize];
+            let ret_val = keys[neighbor_idx as usize];
             keys = pair_keys(&keys, self.context.public_seed);
-            leaf_idx = leaf_idx / 2;
-        };
-        auth_path
+            leaf_idx /= 2;
+            ret_val
+        })
     }
 }
 

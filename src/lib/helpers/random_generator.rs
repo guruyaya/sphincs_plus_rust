@@ -51,7 +51,7 @@ impl Address {
         let level = u16::from_le_bytes(level_bytes);
         let position = u128::from_le_bytes(position_bytes);
         
-        Self{level: level, position: position}
+        Self{level, position}
     }
 }
 

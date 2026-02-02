@@ -44,7 +44,7 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         }
     }
     pub fn sign_position(&self, data_hash: HashData, position: u128) -> (ForsSignature<K, A>, HashData){
-        let context = HashContext{public_seed: self.public_seed, address: Address{level: 0, position: position}};
+        let context = HashContext{public_seed: self.public_seed, address: Address{level: 0, position}};
 
         let fors = Fors::<K, A>::new(self.seed, context);
         
@@ -65,8 +65,8 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         
         let (fors, fors_public_key) = self.sign_position(hash_and_ts, index);
         let hp_signer = HyperTreeSigner::<LAYERS, TREE_HEIGHT>::new(self.seed, self.public_seed);
-        let hp_signature = hp_signer.sign(fors_public_key, index as u128);
-        SphincsSignature::<K, A, LAYERS, TREE_HEIGHT>{data_hash: message_hash, fors, hyper_tree: hp_signature, timestamp: timestamp}
+        let hyper_tree = hp_signer.sign(fors_public_key, index as u128);
+        SphincsSignature::<K, A, LAYERS, TREE_HEIGHT>{data_hash: message_hash, fors, hyper_tree, timestamp}
     }
 
     pub fn sign(&self, message: &[u8]) -> SphincsSignature<K, A, LAYERS, TREE_HEIGHT> {
