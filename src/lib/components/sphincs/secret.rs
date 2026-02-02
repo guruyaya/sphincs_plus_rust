@@ -15,13 +15,13 @@ pub fn get_ms_timestamp_milliseconds() -> u128{
     since_the_epoch.as_millis()
 }
 
-fn hash_to_u64(hash: HashData) -> u64 {
-    let mut result = 0u64;
-    for i in 0..4 {
-        let start = i * 8;
-        let mut bytes = [0u8; 8];
-        bytes.copy_from_slice(&hash[start..start+8]);
-        result ^= u64::from_be_bytes(bytes);
+fn hash_to_u128(hash: HashData) -> u128 {
+    let mut result = 0u128;
+    for i in 0..2 {
+        let start = i * 16;
+        let mut bytes = [0u8; 16];
+        bytes.copy_from_slice(&hash[start..start+16]);
+        result ^= u128::from_be_bytes(bytes);
     }
     result
 }
@@ -43,8 +43,8 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
             public_seed: self.public_seed
         }
     }
-    pub fn sign_position(&self, data_hash: HashData, position: u64) -> (ForsSignature<K, A>, HashData){
-        let context = HashContext{public_seed: self.public_seed, address: Address{level: 0, position}};
+    pub fn sign_position(&self, data_hash: HashData, position: u128) -> (ForsSignature<K, A>, HashData){
+        let context = HashContext{public_seed: self.public_seed, address: Address{level: 0, position: position as u64}};
 
         let fors = Fors::<K, A>::new(self.seed, context);
         
@@ -55,17 +55,17 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         let hashed_ts = hash_message(&timestamp.to_be_bytes());
         let message_hash = hash_message(message);
         let hash_and_ts = hash_array(&[message_hash, hashed_ts]);
-        let max_index = (2_u64).pow(LAYERS as u32 * TREE_HEIGHT as u32);
+        let max_index = (2_u128).pow(LAYERS as u32 * TREE_HEIGHT as u32);
 
         
         let index = match force_index {
-            None => hash_to_u64(hash_and_ts) % max_index,
-            Some(idx) => idx % max_index
+            None => hash_to_u128(hash_and_ts) % max_index,
+            Some(idx) => (idx as u128) % max_index
         };
         
         let (fors, fors_public_key) = self.sign_position(hash_and_ts, index);
         let hp_signer = HyperTreeSigner::<LAYERS, TREE_HEIGHT>::new(self.seed, self.public_seed);
-        let hp_signature = hp_signer.sign(fors_public_key, index);
+        let hp_signature = hp_signer.sign(fors_public_key, index as u128);
         SphincsSignature::<K, A, LAYERS, TREE_HEIGHT>{data_hash: message_hash, fors, hyper_tree: hp_signature, timestamp: timestamp}
     }
 

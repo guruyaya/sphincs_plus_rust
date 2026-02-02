@@ -1,6 +1,7 @@
 use crate::lib::{
     components::sphincs::secret::{SphincsSigner},
-    helpers::hasher::hash_message
+    helpers::hasher::hash_message,
+    helpers::random_generator::HashData
 };
 
 #[test]
@@ -57,7 +58,7 @@ fn test_different_seeds_different_signatures() {
     const TREE_HEIGHT: usize = 3;
     
     let seed1 = hash_message("my secret seed".as_bytes());
-    let seed2 = hash_message("my other secret seed".as_bytes());
+    let seed2 = hash_message("my Other secret seed".as_bytes());
     let public_seed = hash_message("my public seed".as_bytes());
     
     let signer1 = SphincsSigner::<K, A, LAYERS, TREE_HEIGHT>::new(seed1, public_seed);
@@ -238,4 +239,28 @@ fn test_validate_tampered_signature() {
     // כי המימוש של validate בודק רק hash ולא את החתימה עצמה.
     // כשתממש את validate במלואו, הטסט הזה יעבור.
     assert!(tampered_signature.validate(message, &public_key).is_err(), "Signature validtion should fail when timestamp is tampered");
+}
+
+#[test]
+fn test_sphincs_128f_parameters() {
+    // Test with real SPHINCS+-128f parameters from FIPS 205
+    // K=33, A=6, LAYERS=22, TREE_HEIGHT=3
+    use crate::lib::components::sphincs::secret::SphincsSigner;
+    use crate::lib::components::sphincs::public::SphincsPublic;
+    
+    let seed = HashData::from([1u8; 32]);
+    let public_seed = HashData::from([2u8; 32]);
+    
+    let signer = SphincsSigner::<33, 6, 22, 3>::new(seed, public_seed);
+    let public_key = signer.public_key();
+    
+    let message = b"Test message for SPHINCS+-128f";
+    let signature = signer.sign(message);
+    
+    // Verify that the signature is valid
+    assert!(signature.validate(message, &public_key).is_ok(), "SPHINCS+-128f signature should be valid");
+    
+    // Verify that a different message fails validation
+    let different_message = b"Different message";
+    assert!(signature.validate(different_message, &public_key).is_err(), "SPHINCS+-128f signature should be invalid for different message");
 }
