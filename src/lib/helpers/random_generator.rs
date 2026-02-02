@@ -31,25 +31,25 @@ impl InnerKeyRole {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Address {
     pub level: u16,
-    pub position: u64
+    pub position: u128
 }
 
 impl Address {
     pub fn default() -> Self{
         Self{position: 0, level: 0}
     }
-    pub fn to_bytes(&self) -> [u8;10]{
-        let mut out = [0u8;10];
+    pub fn to_bytes(&self) -> [u8;18]{
+        let mut out = [0u8;18];
         out[..2].copy_from_slice(&self.level.to_le_bytes());
         out[2..].copy_from_slice(&self.position.to_le_bytes());
         out
     }
 
-    pub fn from_bytes(bytes: [u8;10]) -> Self {
+    pub fn from_bytes(bytes: [u8;18]) -> Self {
         let level_bytes:[u8;2] = bytes[0..2].try_into().expect("Got unexpected bites size?");
-        let position_bytes:[u8; 8] = bytes[2..].try_into().expect("Got unexpected bites size?");
+        let position_bytes:[u8; 16] = bytes[2..].try_into().expect("Got unexpected bites size?");
         let level = u16::from_le_bytes(level_bytes);
-        let position = u64::from_le_bytes(position_bytes);
+        let position = u128::from_le_bytes(position_bytes);
         
         Self{level: level, position: position}
     }

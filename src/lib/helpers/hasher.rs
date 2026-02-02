@@ -12,14 +12,14 @@ impl HashContext{
     pub fn default() -> Self {
         Self{public_seed: HASH_DATA_0, address: Address{level: 0, position: 0}}
     }
-    pub fn to_bytes(&self) -> [u8;42] {
-        let mut out = [0u8;42];
+    pub fn to_bytes(&self) -> [u8;50] {
+        let mut out = [0u8;50];
         out[..32].copy_from_slice(&self.public_seed);
         out[32..].copy_from_slice(&self.address.to_bytes());
         out
     }
 
-    pub fn from_bytes(bytes:[u8;42]) -> Self {
+    pub fn from_bytes(bytes:[u8;50]) -> Self {
         let pubkey = bytes[0..32].try_into().expect("Unexpected byte size provided");
         let address_bytes = bytes[32..].try_into().expect("Unexpected byte size provided");
         let address = Address::from_bytes(address_bytes);

@@ -246,7 +246,6 @@ fn test_sphincs_128f_parameters() {
     // Test with real SPHINCS+-128f parameters from FIPS 205
     // K=33, A=6, LAYERS=22, TREE_HEIGHT=3
     use crate::lib::components::sphincs::secret::SphincsSigner;
-    use crate::lib::components::sphincs::public::SphincsPublic;
     
     let seed = HashData::from([1u8; 32]);
     let public_seed = HashData::from([2u8; 32]);

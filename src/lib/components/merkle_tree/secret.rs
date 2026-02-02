@@ -32,8 +32,8 @@ impl<const HEIGHT:usize> MerkleSigner<HEIGHT> {
         let position = self.context.address.position;
         let level = self.context.address.level;
         let public_seed = self.context.public_seed;
-        let first_postion = (position / &self.num_trees) * &self.num_trees;
-        let next_tree_position = first_postion + self.num_trees;
+        let first_postion = (position / &(self.num_trees as u128)) * &(self.num_trees as u128);
+        let next_tree_position = first_postion + self.num_trees as u128;
         (first_postion..next_tree_position).map(|pos| {
             WotsPlus::new(self.seed.clone(), HashContext { public_seed, address: Address{level, position: pos} })
         }).collect()
@@ -198,7 +198,9 @@ mod tests {
         let (public_key, merkle_leaves) = signer.get_public_key_and_proof();
         assert_eq!(merkle_leaves.len(), 4);
         // This checks if the key is stable over tests
-        assert_eq!(public_key, [139, 137, 180, 109, 40, 149, 165, 184, 216, 153, 73, 100, 57, 37, 48, 217, 183, 224, 174, 187, 22, 32, 151, 116, 234, 132, 154, 232, 253, 221, 216, 137] );
+        assert_eq!( public_key, [204, 69, 137, 115, 70, 125, 219, 78, 237, 
+            239, 133, 114, 169, 95, 104, 171, 2, 29, 144, 58, 193, 173, 140, 
+            205, 252, 155, 196, 182, 175, 190, 159, 181] );
         
         let mut other_context = HashContext::default();
         other_context.address.position = 11;

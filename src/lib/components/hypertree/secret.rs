@@ -19,7 +19,7 @@ impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSigner<LAYERS, TREE
         public_key
     }
 
-    pub(super) fn get_tree_pos(self, index: u64, i: usize) -> u64 {
+    pub(super) fn get_tree_pos(self, index: u128, i: usize) -> u128 {
         index >> (i * TREE_HEIGHT)
     }
 
@@ -27,7 +27,7 @@ impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSigner<LAYERS, TREE
         let mut current_message = fors_public_key;
         
         let proofs = core::array::from_fn(|i| {
-            let pos = self.clone().get_tree_pos(index as u64, i);
+            let pos = self.clone().get_tree_pos(index as u128, i);
             let context = HashContext { 
                 public_seed: self.public_seed, 
                 address: Address { level: i as u16, position: pos } 
@@ -95,6 +95,10 @@ mod tests {
         assert_eq!(signature1.proofs[0].clone().get_height(), 3);
         assert_ne!(&signature1, &signature2);
         assert_ne!(&signature1, &signature3);
-        assert_eq!(pub_key, [224, 31, 1, 91, 252, 215, 6, 57, 53, 202, 213, 81, 97, 177, 126, 123, 144, 199, 0, 252, 76, 99, 252, 236, 244, 59, 129, 140, 77, 193, 28, 177])
+        assert_eq!(pub_key, [221, 80, 43, 100, 45, 35, 
+            185, 131, 120, 166, 163, 29, 
+            157, 110, 71, 255, 12, 157, 
+            212, 185, 29, 220, 144, 0, 
+            42, 199, 230, 105, 177, 246, 219, 59])
     }
 }

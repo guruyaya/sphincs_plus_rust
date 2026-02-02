@@ -87,17 +87,17 @@ impl WotsPlus {
         self.sign_hash(hashed)
     }
     
-    pub fn to_bytes(&self) -> [u8; 74] {
-        let mut out = [0u8;74];
+    pub fn to_bytes(&self) -> [u8; 82] {
+        let mut out = [0u8;82];
         out[..32].copy_from_slice(&self.seed);
         out[32..].copy_from_slice(&self.context.to_bytes());
 
         out
     }
     
-    pub fn from_bytes(bytes: [u8; 74]) -> Self{
+    pub fn from_bytes(bytes: [u8; 82]) -> Self{
         let seed:[u8;32] = bytes[..32].try_into().expect("Got the wrong size bytes");
-        let context_bytes:[u8;42] = bytes[32..].try_into().expect("Got the wrong size bytes");
+        let context_bytes:[u8;50] = bytes[32..].try_into().expect("Got the wrong size bytes");
         let context = HashContext::from_bytes(context_bytes);
         Self::new(seed, context)
     }
