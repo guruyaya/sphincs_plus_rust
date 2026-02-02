@@ -1,15 +1,19 @@
-use crate::lib::{components::{fors::{indices::message_to_indices, public::ForsSignature}, hypertree::public::HyperTreeSignature, sphincs::public::SphincsPublic}, helpers::{hasher::{hash_array, hash_message}, random_generator::HashData}};
+use crate::lib::{components::{fors::{indices::message_to_indices, public::{self, ForsSignature}}, hypertree::public::{FailedValidation, HyperTreeSignature}, sphincs::public::SphincsPublic}, helpers::{hasher::{hash_array, hash_message}, random_generator::HashData}};
 
+#[derive(Debug)]
 pub struct SignatureValidResult {
     pub data_hash: HashData,
     pub public_key: HashData,
     pub timestamp: u128,
 }
 
+
+
 #[derive(Debug)]
 pub enum SigntureError {
     WrongMessage(HashData),
-    ValidationError,
+    HTProofError(usize, HashData, HashData),
+    HTPublicKey(HashData, HashData),
     ForsFailure(HashData, HashData)
 }
 
@@ -41,8 +45,9 @@ impl<const K:usize, const A: usize, const LAYERS: usize, const TREE_HEIGHT: usiz
         let hyper_tree_result = self.hyper_tree.clone().validate(fors_key, public_key.key);
         
         match hyper_tree_result {
-            false => Err(SigntureError::ValidationError),
-            true => {
+            Err(FailedValidation::Proof(i, testing_key ,public_key )) => Err(SigntureError::HTProofError(i, testing_key, public_key)),
+            Err(FailedValidation::PublicKey(testing_key, public_key)) => Err(SigntureError::HTPublicKey(testing_key, public_key)),
+            Ok(_) => {
                 Ok(SignatureValidResult{data_hash: message_hash, public_key: public_key.key, timestamp: self.timestamp})
             }
         }

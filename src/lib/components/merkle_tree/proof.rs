@@ -1,4 +1,4 @@
-use crate::lib::{components::wots_plus::signature::{WotsPlusSignature}, helpers::{hasher::hash_array, random_generator::HashData}};
+use crate::lib::{components::{fors::public, wots_plus::signature::WotsPlusSignature}, helpers::{hasher::hash_array, random_generator::HashData}};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MerkleProof<const HEIGHT:usize> { // STEM_HEIGHT does not include the root level
@@ -11,7 +11,7 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
     pub fn get_height(self) -> usize {
         HEIGHT
     }
-    pub fn validate(self, message: &[u8], public_key: HashData)-> bool {
+    pub fn get_expected_public_key(self, message: &[u8]) -> HashData{
         let this_signature = self.signature.clone();
         let num_keys = (2 as usize).pow(HEIGHT as u32);
         
@@ -26,6 +26,10 @@ impl<const HEIGHT:usize> MerkleProof<HEIGHT> {
             }
             key_idx = key_idx / 2
         };
+        key
+    }
+    pub fn validate(self, message: &[u8], public_key: HashData)-> bool {
+        let key = self.get_expected_public_key(message);
         public_key == key
     }
     pub fn validate_self(self, message: &[u8])-> bool {

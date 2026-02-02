@@ -1,26 +1,32 @@
 use crate::lib::{components::merkle_tree::proof::MerkleProof, helpers::random_generator::HashData};
 
+pub enum FailedValidation {
+    Proof(usize, HashData, HashData),
+    PublicKey(HashData, HashData)
+}
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct HyperTreeSignature<const LAYERS: usize, const TREE_HEIGHT: usize> {
-    pub proofs: [MerkleProof<TREE_HEIGHT>; LAYERS]
+    pub proofs: [MerkleProof<TREE_HEIGHT>; LAYERS],
+    pub public_key: HashData
 }
 
 impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSignature<LAYERS, TREE_HEIGHT> {
-    pub fn get_expected_public_key(self, fors_public_key: HashData) -> Option<HashData> {
+    pub fn get_expected_public_key(self, fors_public_key: HashData) -> Result<HashData, FailedValidation> {
         let mut testing_key = fors_public_key;
         for i in 0..LAYERS {
             if !self.proofs[i].clone().validate_self(&testing_key) {
-                return None;
+                return Err(FailedValidation::Proof(i, testing_key, self.proofs[i].clone().public_key));
             }
             testing_key = self.proofs[i].public_key;
         };
-        Some(testing_key)
+        Ok(testing_key)
     }
-    pub fn validate(self, fors_public_key: HashData, public_key: HashData) -> bool {
-        let result = self.get_expected_public_key(fors_public_key);
-        match result {
-            None => false,
-            Some(testing_key) => public_key == testing_key
+    pub fn validate(self, fors_public_key: HashData, public_key: HashData) -> Result<HashData, FailedValidation> {
+        let testing_key = self.get_expected_public_key(fors_public_key)?;
+        match public_key == testing_key {
+            true => Ok(public_key),
+            false => Err(FailedValidation::PublicKey(public_key, testing_key))
         }
     }
 }
@@ -44,9 +50,9 @@ mod tests {
 
         let signature1 = htree.clone().sign(fors_public_key, 10);
 
-        assert!(signature1.clone().validate(fors_public_key, public_key));
-        assert!(!signature1.clone().validate(fors_public_key, bad_public_key));
-        assert!(!signature1.clone().validate(fake_fors_public_key, public_key));
+        assert!(signature1.clone().validate(fors_public_key, public_key).is_ok());
+        assert!(signature1.clone().validate(fors_public_key, bad_public_key).is_err());
+        assert!(signature1.clone().validate(fake_fors_public_key, public_key).is_err());
 
     }
 }

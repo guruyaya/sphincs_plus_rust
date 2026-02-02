@@ -3,8 +3,8 @@ use crate::lib::helpers::{hasher::{HashContext, complement_hash, hash_array}, ra
 
 pub const MAX_HASHES_NEEDED:u16 = 255 * 32;
 
-pub struct ValidWotsPSignature (HashData, HashContext); // public key, context
-pub struct InvalidWotsPSignature (HashData, HashData, HashContext); // calculated public key, public key, context
+pub struct ValidWotsPSignature (pub HashData, pub HashContext); // public key, context
+pub struct InvalidWotsPSignature (pub HashData, pub HashData, pub HashContext); // calculated public key, public key, context
 
 #[derive(Debug,Clone, PartialEq)]
 pub struct WotsPlusSignature {
@@ -14,7 +14,7 @@ pub struct WotsPlusSignature {
     pub public_key: HashData
 }
 
-impl<'a> WotsPlusSignature {
+impl WotsPlusSignature {
     pub fn get_expected_public_from_hash(self, message_hash: HashData) -> HashData {
         let mut count_hashes_left: u16 = MAX_HASHES_NEEDED;
         let mut out = [HASH_DATA_0;34];

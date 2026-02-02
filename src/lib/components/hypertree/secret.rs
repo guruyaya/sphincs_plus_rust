@@ -38,7 +38,7 @@ impl<const LAYERS: usize, const TREE_HEIGHT: usize> HyperTreeSigner<LAYERS, TREE
             proof
         });
 
-        HyperTreeSignature { proofs }
+        HyperTreeSignature { proofs, public_key: self.generate_master_public_key() }
     } 
 
 

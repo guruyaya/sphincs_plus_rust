@@ -143,8 +143,8 @@ fn test_validate_signature_valid() {
     let message = b"Verify me!";
     let signature = signer.sign(message);
     let public_key = signer.public_key();
-
-    assert!(signature.validate(message, &public_key).is_ok());
+    let validation = signature.validate(message, &public_key);
+    assert!(validation.is_ok(), "Returned with error {:?}", validation);
 }
 
 #[test]
